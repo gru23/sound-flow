@@ -1,6 +1,8 @@
 package org.unibl.etf.soundflow.controllers;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,6 +11,7 @@ import org.unibl.etf.soundflow.models.dto.Client;
 import org.unibl.etf.soundflow.models.dto.LoginResponse;
 import org.unibl.etf.soundflow.models.requests.ClientRequest;
 import org.unibl.etf.soundflow.models.requests.LoginRequest;
+import org.unibl.etf.soundflow.models.requests.LogoutRequest;
 import org.unibl.etf.soundflow.services.AuthService;
 import org.unibl.etf.soundflow.services.ClientService;
 
@@ -31,5 +34,15 @@ public class AuthController {
     @PostMapping("/registration")
     public Client registration(@RequestBody @Valid ClientRequest clientRequest) {
         return clientService.registration(clientRequest);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestBody @Valid LogoutRequest request) {
+        if(authService.logout(request))
+            return ResponseEntity.ok().body("Logout successful");
+        // ali ovo treba zamjeniti sa globalnim exception handler-om!
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("Invalid refresh token");
+
     }
 }

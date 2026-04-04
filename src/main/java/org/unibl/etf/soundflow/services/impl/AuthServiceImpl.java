@@ -10,9 +10,12 @@ import org.springframework.stereotype.Service;
 import org.unibl.etf.soundflow.exceptions.UnauthorizedException;
 import org.unibl.etf.soundflow.models.dto.JwtClient;
 import org.unibl.etf.soundflow.models.dto.LoginResponse;
+import org.unibl.etf.soundflow.models.entities.RefreshTokenEntity;
 import org.unibl.etf.soundflow.models.requests.LoginRequest;
+import org.unibl.etf.soundflow.models.requests.LogoutRequest;
 import org.unibl.etf.soundflow.services.AuthService;
 import org.unibl.etf.soundflow.services.ClientService;
+import org.unibl.etf.soundflow.services.RefreshTokenService;
 
 import java.util.Date;
 
@@ -20,15 +23,17 @@ import java.util.Date;
 public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final ClientService clientService;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${authorization.token.expiration-time}")
     private String tokenExpirationTime;
     @Value("${authorization.token.secret}")
     private String tokenSecret;
 
-    public AuthServiceImpl(AuthenticationManager authenticationManager, ClientService clientService) {
+    public AuthServiceImpl(AuthenticationManager authenticationManager, ClientService clientService, RefreshTokenService refreshTokenService) {
         this.authenticationManager = authenticationManager;
         this.clientService = clientService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Override
@@ -40,12 +45,22 @@ public class AuthServiceImpl implements AuthService {
             );
             JwtClient client = (JwtClient) authenticate.getPrincipal();
             response = clientService.findById(client.getId());
-            response.setToken(generateJwt(client));
+            response.setAccessToken(generateJwt(client));
+            RefreshTokenEntity refreshToken = refreshTokenService.generate(client.getId());
+            response.setRefreshToken(refreshToken.getToken());
         } catch(Exception ex) { // vidi kako ovo obraditi. problem je pravio kratak token secret
             System.err.println(ex.getMessage());
             throw new UnauthorizedException();
         }
         return response;
+    }
+
+    @Override
+    public Boolean logout(LogoutRequest request) {
+        if(!refreshTokenService.isLogoutRequestValid(request))
+            return false;
+        refreshTokenService.revoke(request.getClientId());
+        return true;
     }
 
     private String generateJwt(JwtClient client) {
