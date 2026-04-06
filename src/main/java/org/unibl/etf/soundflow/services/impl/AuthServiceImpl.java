@@ -48,9 +48,9 @@ public class AuthServiceImpl implements AuthService {
             response.setAccessToken(generateJwt(client));
             RefreshTokenEntity refreshToken = refreshTokenService.generate(client.getId());
             response.setRefreshToken(refreshToken.getToken());
-        } catch(Exception ex) { // vidi kako ovo obraditi. problem je pravio kratak token secret
-            System.err.println(ex.getMessage());
-            throw new UnauthorizedException();
+        } catch(Exception ex) {
+            ex.printStackTrace();
+            throw new UnauthorizedException(ex.getMessage());
         }
         return response;
     }

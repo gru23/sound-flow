@@ -7,6 +7,6 @@ import org.unibl.etf.soundflow.models.requests.LogoutRequest;
 
 public interface RefreshTokenService {
     RefreshTokenEntity generate(Integer clientId);
-    void revoke(Integer clientId);
+    void revoke(Integer clientId) throws NotFoundException;
     Boolean isLogoutRequestValid(LogoutRequest request) throws UnauthorizedException, NotFoundException;
 }

@@ -38,7 +38,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
-    public void revoke(Integer clientId) {
+    public void revoke(Integer clientId) throws NotFoundException {
         RefreshTokenEntity token = refreshTokenEntityRepository
                 .findByClientIdAndRevokedFalse(clientId)
                 .orElseThrow(NotFoundException::new);
