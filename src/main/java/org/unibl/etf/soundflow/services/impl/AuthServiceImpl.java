@@ -77,10 +77,7 @@ public class AuthServiceImpl implements AuthService {
     // public LoginResponse checkClient(CheckClientRequest request)
             throws UnauthorizedException, NotFoundException {
         String username = parseToken(accessToken).getSubject();
-        Client client = clientService.findByUsername(username);
-        if(client.getUsername().equals(username))
-            return client;
-        throw new UnauthorizedException();
+        return clientService.findByUsername(username);
     }
 
     private String generateJwt(JwtClient client) {
