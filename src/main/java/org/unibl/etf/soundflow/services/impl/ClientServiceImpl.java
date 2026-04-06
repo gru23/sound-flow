@@ -31,9 +31,17 @@ public class ClientServiceImpl implements ClientService {
         this.entityManager = entityManager;
     }
 
-    public LoginResponse findById(Integer id) {
-        ClientEntity entity = clientEntityRepository.findById(id).orElseThrow(NotFoundException::new);
+    public LoginResponse findById(Integer id) throws NotFoundException {
+        ClientEntity entity = clientEntityRepository.findById(id)
+                .orElseThrow(NotFoundException::new);
         return modelMapper.map(entity, LoginResponse.class);
+    }
+
+    @Override
+    public Client findByUsername(String username) throws NotFoundException {
+        ClientEntity entity = clientEntityRepository.findByUsername(username)
+                .orElseThrow(NotFoundException::new);
+        return modelMapper.map(entity, Client.class);
     }
 
     @Override

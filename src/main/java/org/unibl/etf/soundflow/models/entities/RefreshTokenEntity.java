@@ -17,9 +17,6 @@ public class RefreshTokenEntity {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Column(name = "client_id", nullable = false)
-    private Integer clientId;
-
     @Column(name = "token", nullable = false, length = 512, unique = true)
     private String token;
 
@@ -29,6 +26,10 @@ public class RefreshTokenEntity {
     @Column(name = "revoked", nullable = false)
     @ColumnDefault("false")
     private Boolean revoked;
+
+    @ManyToOne
+    @JoinColumn(name = "client_id", nullable = false)
+    private ClientEntity client;
 
     @PrePersist
     public void prePersist() {

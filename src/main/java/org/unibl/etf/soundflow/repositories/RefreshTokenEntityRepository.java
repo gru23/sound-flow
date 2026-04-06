@@ -6,5 +6,5 @@ import org.unibl.etf.soundflow.models.entities.RefreshTokenEntity;
 import java.util.Optional;
 
 public interface RefreshTokenEntityRepository extends JpaRepository<RefreshTokenEntity, Integer> {
-    Optional<RefreshTokenEntity> findByClientIdAndRevokedFalse(Integer clientId);
+    Optional<RefreshTokenEntity> findByClient_IdAndRevokedFalse(Integer clientId);
 }

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.unibl.etf.soundflow.exceptions.NotFoundException;
 import org.unibl.etf.soundflow.exceptions.UnauthorizedException;
+import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.entities.RefreshTokenEntity;
 import org.unibl.etf.soundflow.models.requests.LogoutRequest;
 import org.unibl.etf.soundflow.repositories.RefreshTokenEntityRepository;
@@ -27,20 +28,20 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
-    public RefreshTokenEntity generate(Integer clientId) {
+    public RefreshTokenEntity generate(ClientEntity client) {
         Instant expiry = Instant.now().plusSeconds(Long.parseLong(refreshTokenExpirationTime));
         byte[] randomBytes = new byte[64]; // 512 bits
         new SecureRandom().nextBytes(randomBytes);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
         RefreshTokenEntity tokenObject =
-                new RefreshTokenEntity(null, clientId, token, expiry, false);
+                new RefreshTokenEntity(null, token, expiry, false, client);
         return refreshTokenEntityRepository.saveAndFlush(tokenObject);
     }
 
     @Override
     public void revoke(Integer clientId) throws NotFoundException {
         RefreshTokenEntity token = refreshTokenEntityRepository
-                .findByClientIdAndRevokedFalse(clientId)
+                .findByClient_IdAndRevokedFalse(clientId)
                 .orElseThrow(NotFoundException::new);
         token.setRevoked(true);
         refreshTokenEntityRepository.saveAndFlush(token);
@@ -56,7 +57,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public Boolean isLogoutRequestValid(LogoutRequest request)
             throws UnauthorizedException, NotFoundException {
         RefreshTokenEntity token = refreshTokenEntityRepository
-                .findByClientIdAndRevokedFalse(request.getClientId())
+                .findByClient_IdAndRevokedFalse(request.getClientId())
                 .orElseThrow(() -> new NotFoundException(
                         "Client with id " + request.getClientId() + " not found or not signed in")
                 );
