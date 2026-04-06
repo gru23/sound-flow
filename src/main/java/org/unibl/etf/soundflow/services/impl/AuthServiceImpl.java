@@ -18,7 +18,6 @@ import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.entities.RefreshTokenEntity;
 import org.unibl.etf.soundflow.models.requests.LoginRequest;
 import org.unibl.etf.soundflow.models.requests.LogoutRequest;
-import org.unibl.etf.soundflow.models.requests.auth.CheckClientRequest;
 import org.unibl.etf.soundflow.services.AuthService;
 import org.unibl.etf.soundflow.services.ClientService;
 import org.unibl.etf.soundflow.services.RefreshTokenService;
