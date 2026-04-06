@@ -2,10 +2,7 @@ package org.unibl.etf.soundflow.controllers;
 
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.unibl.etf.soundflow.models.dto.Client;
 import org.unibl.etf.soundflow.models.dto.LoginResponse;
 import org.unibl.etf.soundflow.models.requests.ClientRequest;
@@ -39,5 +36,11 @@ public class AuthController {
     public ResponseEntity<Void> logout(@RequestBody @Valid LogoutRequest request) {
         authService.logout(request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/check")
+    public ResponseEntity<Client> check(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        return ResponseEntity.ok(authService.checkClient(token));
     }
 }
