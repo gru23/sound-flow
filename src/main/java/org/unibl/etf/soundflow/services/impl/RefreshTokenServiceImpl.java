@@ -59,7 +59,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshTokenEntity token = refreshTokenEntityRepository
                 .findByClient_IdAndRevokedFalse(request.getClientId())
                 .orElseThrow(() -> new NotFoundException(
-                        "Client with id " + request.getClientId() + " not found or not signed in")
+                        "Client not found or not signed in")
                 );
         if(token.getToken().equals(request.getRefreshToken()) &&
                 token.getExpiry().isAfter(Instant.now()))
