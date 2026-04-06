@@ -56,11 +56,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Boolean logout(LogoutRequest request) {
+    public void logout(LogoutRequest request) {
         if(!refreshTokenService.isLogoutRequestValid(request))
-            return false;
+            throw new UnauthorizedException("Invalid refresh token");
         refreshTokenService.revoke(request.getClientId());
-        return true;
     }
 
     private String generateJwt(JwtClient client) {

@@ -37,12 +37,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestBody @Valid LogoutRequest request) {
-        if(authService.logout(request))
-            return ResponseEntity.ok().body("Logout successful");
-        // ali ovo treba zamjeniti sa globalnim exception handler-om!
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("Invalid refresh token");
-
+    public ResponseEntity<Void> logout(@RequestBody @Valid LogoutRequest request) {
+        authService.logout(request);
+        return ResponseEntity.noContent().build();
     }
 }
