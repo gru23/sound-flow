@@ -1,4 +1,4 @@
-package org.unibl.etf.soundflow.models.requests;
+package org.unibl.etf.soundflow.models.requests.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
