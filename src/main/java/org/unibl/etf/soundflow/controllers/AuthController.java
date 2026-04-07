@@ -6,8 +6,9 @@ import org.springframework.web.bind.annotation.*;
 import org.unibl.etf.soundflow.models.dto.Client;
 import org.unibl.etf.soundflow.models.dto.LoginResponse;
 import org.unibl.etf.soundflow.models.requests.ClientRequest;
-import org.unibl.etf.soundflow.models.requests.LoginRequest;
-import org.unibl.etf.soundflow.models.requests.LogoutRequest;
+import org.unibl.etf.soundflow.models.requests.auth.LoginRequest;
+import org.unibl.etf.soundflow.models.requests.auth.LogoutRequest;
+import org.unibl.etf.soundflow.models.requests.auth.RefreshRequest;
 import org.unibl.etf.soundflow.services.AuthService;
 import org.unibl.etf.soundflow.services.ClientService;
 
@@ -42,5 +43,10 @@ public class AuthController {
     public ResponseEntity<Client> check(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         return ResponseEntity.ok(authService.checkClient(token));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<String> refresh(@RequestBody @Valid RefreshRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request));
     }
 }

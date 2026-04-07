@@ -16,8 +16,9 @@ import org.unibl.etf.soundflow.models.dto.JwtClient;
 import org.unibl.etf.soundflow.models.dto.LoginResponse;
 import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.entities.RefreshTokenEntity;
-import org.unibl.etf.soundflow.models.requests.LoginRequest;
-import org.unibl.etf.soundflow.models.requests.LogoutRequest;
+import org.unibl.etf.soundflow.models.requests.auth.LoginRequest;
+import org.unibl.etf.soundflow.models.requests.auth.LogoutRequest;
+import org.unibl.etf.soundflow.models.requests.auth.RefreshRequest;
 import org.unibl.etf.soundflow.services.AuthService;
 import org.unibl.etf.soundflow.services.ClientService;
 import org.unibl.etf.soundflow.services.RefreshTokenService;
@@ -77,6 +78,19 @@ public class AuthServiceImpl implements AuthService {
             throws UnauthorizedException, NotFoundException {
         String username = parseToken(accessToken).getSubject();
         return clientService.findByUsername(username);
+    }
+
+    /**
+     * Refresh access token if refresh token is valid.
+     * @return New Access token generated based on Refresh token from {@code request}.
+     * @throws UnauthorizedException If Refresh token is not valid.
+     */
+    @Override
+    public String refreshToken(RefreshRequest request) throws UnauthorizedException {
+        RefreshTokenEntity token = refreshTokenService.getToken(request.getRefreshToken());
+        return generateJwt(new JwtClient(
+                            token.getClient().getId(), token.getClient().getUsername(), null)
+        );
     }
 
     private String generateJwt(JwtClient client) {

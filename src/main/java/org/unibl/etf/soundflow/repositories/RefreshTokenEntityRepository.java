@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface RefreshTokenEntityRepository extends JpaRepository<RefreshTokenEntity, Integer> {
     Optional<RefreshTokenEntity> findByClient_IdAndRevokedFalse(Integer clientId);
+    Optional<RefreshTokenEntity> findByTokenAndRevokedFalse(String token);
 }

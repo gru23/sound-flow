@@ -7,7 +7,7 @@ import org.unibl.etf.soundflow.exceptions.NotFoundException;
 import org.unibl.etf.soundflow.exceptions.UnauthorizedException;
 import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.entities.RefreshTokenEntity;
-import org.unibl.etf.soundflow.models.requests.LogoutRequest;
+import org.unibl.etf.soundflow.models.requests.auth.LogoutRequest;
 import org.unibl.etf.soundflow.repositories.RefreshTokenEntityRepository;
 import org.unibl.etf.soundflow.services.RefreshTokenService;
 
@@ -61,9 +61,22 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 .orElseThrow(() -> new NotFoundException(
                         "Client not found or not signed in")
                 );
-        if(token.getToken().equals(request.getRefreshToken()) &&
-                token.getExpiry().isAfter(Instant.now()))
+        if(token.getToken().equals(request.getRefreshToken()) && isNotExpired(token))
             return true;
         throw new UnauthorizedException("Invalid refresh token");
+    }
+
+    @Override
+    public RefreshTokenEntity getToken(String token) throws UnauthorizedException {
+        RefreshTokenEntity tokenEntity = refreshTokenEntityRepository
+                .findByTokenAndRevokedFalse(token)
+                .orElseThrow(UnauthorizedException::new);
+        if(isNotExpired(tokenEntity))
+            return tokenEntity;
+        throw new UnauthorizedException("Invalid refresh token");
+    }
+
+    private boolean isNotExpired(RefreshTokenEntity token) {
+        return token.getExpiry().isAfter(Instant.now());
     }
 }

@@ -54,7 +54,7 @@ public class WebSecurityConfig {
                     ).permitAll();
 
                     // Allow login and signup
-                    auth.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/registration","/confirm-email/**").permitAll();
+                    auth.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/registration", "/auth/refresh","/confirm-email/**").permitAll();
 
                     auth.requestMatchers(HttpMethod.GET, "/profile-verify").permitAll();
 

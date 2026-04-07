@@ -4,8 +4,9 @@ import org.unibl.etf.soundflow.exceptions.NotFoundException;
 import org.unibl.etf.soundflow.exceptions.UnauthorizedException;
 import org.unibl.etf.soundflow.models.dto.Client;
 import org.unibl.etf.soundflow.models.dto.LoginResponse;
-import org.unibl.etf.soundflow.models.requests.LoginRequest;
-import org.unibl.etf.soundflow.models.requests.LogoutRequest;
+import org.unibl.etf.soundflow.models.requests.auth.LoginRequest;
+import org.unibl.etf.soundflow.models.requests.auth.LogoutRequest;
+import org.unibl.etf.soundflow.models.requests.auth.RefreshRequest;
 
 public interface AuthService {
     LoginResponse login(LoginRequest request);
@@ -13,4 +14,5 @@ public interface AuthService {
     Client checkClient(String accessToken) throws UnauthorizedException, NotFoundException;
     // ovaj mozda ostaviti ako cu slati zahtjev u kojem cu morati naglasiti o kojoj autentikaciji je rijec
 //    LoginResponse checkClient(CheckClientRequest request) throws UnauthorizedException, NotFoundException;
+    String refreshToken(RefreshRequest request) throws UnauthorizedException;
 }
