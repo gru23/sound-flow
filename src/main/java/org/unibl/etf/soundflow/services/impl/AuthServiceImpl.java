@@ -22,14 +22,16 @@ import org.unibl.etf.soundflow.models.requests.auth.RefreshRequest;
 import org.unibl.etf.soundflow.services.AuthService;
 import org.unibl.etf.soundflow.services.ClientService;
 import org.unibl.etf.soundflow.services.RefreshTokenService;
+import org.unibl.etf.soundflow.services.VerifyTokenService;
 
 import java.util.Date;
 
 @Service
 public class AuthServiceImpl implements AuthService {
-    private final AuthenticationManager authenticationManager;
     private final ClientService clientService;
     private final RefreshTokenService refreshTokenService;
+    private final VerifyTokenService verifyTokenService;
+    private final AuthenticationManager authenticationManager;
     private final ModelMapper modelMapper;
 
     @Value("${authorization.token.expiration-time}")
@@ -37,11 +39,18 @@ public class AuthServiceImpl implements AuthService {
     @Value("${authorization.token.secret}")
     private String tokenSecret;
 
-    public AuthServiceImpl(AuthenticationManager authenticationManager, ClientService clientService, RefreshTokenService refreshTokenService, ModelMapper modelMapper) {
+    public AuthServiceImpl(AuthenticationManager authenticationManager, ClientService clientService, RefreshTokenService refreshTokenService, VerifyTokenService verifyTokenService, ModelMapper modelMapper) {
         this.authenticationManager = authenticationManager;
         this.clientService = clientService;
         this.refreshTokenService = refreshTokenService;
+        this.verifyTokenService = verifyTokenService;
         this.modelMapper = modelMapper;
+    }
+
+    @Override
+    public void verify(String token) {
+        if(!verifyTokenService.isValid(token))
+            throw new UnauthorizedException("Invalid token");
     }
 
     @Override
@@ -52,7 +61,13 @@ public class AuthServiceImpl implements AuthService {
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
             JwtClient client = (JwtClient) authenticate.getPrincipal();
-            response = clientService.findById(client.getId());
+            ClientEntity clientEntity = modelMapper.map(
+                    clientService.findById(client.getId()),
+                    ClientEntity.class
+            );
+            if(!clientEntity.getIsVerified())
+                throw new UnauthorizedException("Account is not verified!");
+            response = modelMapper.map(clientEntity, LoginResponse.class);
             response.setAccessToken(generateJwt(client));
             RefreshTokenEntity refreshToken = refreshTokenService.generate(
                     modelMapper.map(response, ClientEntity.class)

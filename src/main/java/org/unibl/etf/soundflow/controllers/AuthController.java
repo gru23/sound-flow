@@ -49,4 +49,10 @@ public class AuthController {
     public ResponseEntity<String> refresh(@RequestBody @Valid RefreshRequest request) {
         return ResponseEntity.ok(authService.refreshToken(request));
     }
+
+    @GetMapping("/verify")
+    public ResponseEntity<String> verify(@RequestParam("token") String token) {
+        authService.verify(token);
+        return ResponseEntity.ok("Account verified successfully");
+    }
 }

@@ -9,6 +9,7 @@ import org.unibl.etf.soundflow.models.requests.auth.LogoutRequest;
 import org.unibl.etf.soundflow.models.requests.auth.RefreshRequest;
 
 public interface AuthService {
+    void verify(String token);
     LoginResponse login(LoginRequest request);
     void logout(LogoutRequest request) throws UnauthorizedException;
     Client checkClient(String accessToken) throws UnauthorizedException, NotFoundException;

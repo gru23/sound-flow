@@ -9,32 +9,33 @@ import org.unibl.etf.soundflow.exceptions.DuplicateValueException;
 import org.unibl.etf.soundflow.exceptions.InternalServerException;
 import org.unibl.etf.soundflow.exceptions.NotFoundException;
 import org.unibl.etf.soundflow.models.dto.Client;
-import org.unibl.etf.soundflow.models.dto.LoginResponse;
 import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.enums.AuthProvider;
 import org.unibl.etf.soundflow.models.requests.ClientRequest;
 import org.unibl.etf.soundflow.repositories.ClientEntityRepository;
 import org.unibl.etf.soundflow.services.ClientService;
+import org.unibl.etf.soundflow.services.EmailService;
 
 @Service
 @Transactional
 public class ClientServiceImpl implements ClientService {
     private final ClientEntityRepository clientEntityRepository;
+    private final EmailService emailService;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final EntityManager entityManager;
 
-    public ClientServiceImpl(ClientEntityRepository clientEntityRepository, ModelMapper modelMapper, PasswordEncoder passwordEncoder, EntityManager entityManager) {
+    public ClientServiceImpl(ClientEntityRepository clientEntityRepository, EmailService emailService, ModelMapper modelMapper, PasswordEncoder passwordEncoder, EntityManager entityManager) {
         this.clientEntityRepository = clientEntityRepository;
+        this.emailService = emailService;
         this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
         this.entityManager = entityManager;
     }
 
-    public LoginResponse findById(Integer id) throws NotFoundException {
-        ClientEntity entity = clientEntityRepository.findById(id)
+    public ClientEntity findById(Integer id) throws NotFoundException {
+        return clientEntityRepository.findById(id)
                 .orElseThrow(NotFoundException::new);
-        return modelMapper.map(entity, LoginResponse.class);
     }
 
     @Override
@@ -54,6 +55,7 @@ public class ClientServiceImpl implements ClientService {
             entity.setPassword(passwordEncoder.encode(entity.getPassword()));
             entity = clientEntityRepository.saveAndFlush(entity);
             entityManager.refresh(entity);
+            emailService.sendVerificationEmail(entity);
             return modelMapper.map(entity, Client.class);
         }
         else if(clientRequest.getAuthProvider() == AuthProvider.GOOGLE) {
@@ -62,5 +64,14 @@ public class ClientServiceImpl implements ClientService {
             return null;
         }
         throw new InternalServerException("Unsupported auth provider");
+    }
+
+    @Override
+    public void setIsVerified(int id) {
+        ClientEntity client = clientEntityRepository
+                .findById(id)
+                .orElseThrow(NotFoundException::new);
+        client.setIsVerified(true);
+        clientEntityRepository.saveAndFlush(client);
     }
 }
