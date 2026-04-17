@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.unibl.etf.soundflow.exceptions.NotFoundException;
 import org.unibl.etf.soundflow.exceptions.UnauthorizedException;
@@ -29,19 +30,21 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final ModelMapper modelMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${authorization.token.expiration-time}")
     private String tokenExpirationTime;
     @Value("${authorization.token.secret}")
     private String tokenSecret;
 
-    public AuthServiceImpl(AuthenticationManager authenticationManager, ClientService clientService, RefreshTokenService refreshTokenService, VerifyTokenService verifyTokenService, EmailService emailService, ModelMapper modelMapper) {
+    public AuthServiceImpl(AuthenticationManager authenticationManager, ClientService clientService, RefreshTokenService refreshTokenService, VerifyTokenService verifyTokenService, EmailService emailService, ModelMapper modelMapper, PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.clientService = clientService;
         this.refreshTokenService = refreshTokenService;
         this.verifyTokenService = verifyTokenService;
         this.emailService = emailService;
         this.modelMapper = modelMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -89,7 +92,7 @@ public class AuthServiceImpl implements AuthService {
     // public LoginResponse checkClient(CheckClientRequest request)
             throws UnauthorizedException, NotFoundException {
         String username = parseToken(accessToken).getSubject();
-        return clientService.findByUsername(username);
+        return modelMapper.map(clientService.findByUsername(username), Client.class);
     }
 
     /**
@@ -111,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
         if(request.getIdentifier().contains("@"))
             client = clientService.findByEmail(request.getIdentifier());
         else
-            client = modelMapper.map(clientService.findByUsername(request.getIdentifier()), ClientEntity.class);
+            client = clientService.findByUsername(request.getIdentifier());
         emailService.sendResetPasswordEmail(client);
     }
 
@@ -119,6 +122,17 @@ public class AuthServiceImpl implements AuthService {
     public void resetPassword(ConfirmResetPasswordRequest request) {
         ClientEntity client = verifyTokenService.isResetPasswordTokenValid(request.getToken());
         clientService.setNewPassword(client, request.getNewPassword());
+    }
+
+    @Override
+    public void changePassword(String token, ChangePasswordRequest request) throws UnauthorizedException {
+        Claims claims = parseToken(token);
+        String username = claims.getSubject();
+        ClientEntity entity = clientService.findByUsername(username);
+
+        if(!passwordEncoder.matches(request.getOldPassword(), entity.getPassword()))
+            throw new UnauthorizedException("Invalid old password");
+        clientService.setNewPassword(entity, request.getNewPassword());
     }
 
     private String generateJwt(JwtClient client) {

@@ -40,10 +40,9 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Client findByUsername(String username) throws NotFoundException {
-        ClientEntity entity = clientEntityRepository.findByUsername(username)
+    public ClientEntity findByUsername(String username) throws NotFoundException {
+        return clientEntityRepository.findByUsername(username)
                 .orElseThrow(NotFoundException::new);
-        return modelMapper.map(entity, Client.class);
     }
 
     @Override

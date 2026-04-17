@@ -65,4 +65,13 @@ public class AuthController {
         authService.resetPassword(request);
         return ResponseEntity.ok("Password changed successfully");
     }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody @Valid ChangePasswordRequest request) {
+        String token = authHeader.replace("Bearer ", "");
+        authService.changePassword(token, request);
+        return ResponseEntity.ok("Password changed successfully");
+    }
 }

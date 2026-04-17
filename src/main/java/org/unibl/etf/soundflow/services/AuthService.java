@@ -16,4 +16,5 @@ public interface AuthService {
     String refreshToken(RefreshRequest request) throws UnauthorizedException;
     void requestResetingPassword(ResetPasswordRequest request);
     void resetPassword(ConfirmResetPasswordRequest request);
+    void changePassword(String token, ChangePasswordRequest request) throws UnauthorizedException;
 }
