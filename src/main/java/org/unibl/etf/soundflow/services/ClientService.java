@@ -8,6 +8,8 @@ import org.unibl.etf.soundflow.models.requests.ClientRequest;
 public interface ClientService {
     ClientEntity findById(Integer id) throws NotFoundException;
     Client findByUsername(String username) throws NotFoundException;
+    ClientEntity findByEmail(String email) throws NotFoundException;
     Client registration(ClientRequest clientRequest);
     void setIsVerified(int id);
+    Client setNewPassword(ClientEntity client, String newPassword);
 }

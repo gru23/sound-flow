@@ -6,9 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import org.unibl.etf.soundflow.models.dto.Client;
 import org.unibl.etf.soundflow.models.dto.LoginResponse;
 import org.unibl.etf.soundflow.models.requests.ClientRequest;
-import org.unibl.etf.soundflow.models.requests.auth.LoginRequest;
-import org.unibl.etf.soundflow.models.requests.auth.LogoutRequest;
-import org.unibl.etf.soundflow.models.requests.auth.RefreshRequest;
+import org.unibl.etf.soundflow.models.requests.auth.*;
 import org.unibl.etf.soundflow.services.AuthService;
 import org.unibl.etf.soundflow.services.ClientService;
 
@@ -54,5 +52,17 @@ public class AuthController {
     public ResponseEntity<String> verify(@RequestParam("token") String token) {
         authService.verify(token);
         return ResponseEntity.ok("Account verified successfully");
+    }
+
+    @PostMapping("/reset")
+    public ResponseEntity<String> reset(@RequestBody @Valid ResetPasswordRequest request) {
+        authService.requestResetingPassword(request);
+        return ResponseEntity.ok("Password reset request has been sent");
+    }
+
+    @PostMapping("/reset-confirm")
+    public ResponseEntity<String> resetConfirm(@RequestBody @Valid ConfirmResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok("Password changed successfully");
     }
 }

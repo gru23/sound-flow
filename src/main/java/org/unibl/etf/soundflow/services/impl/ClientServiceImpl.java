@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.unibl.etf.soundflow.exceptions.DuplicateValueException;
 import org.unibl.etf.soundflow.exceptions.InternalServerException;
 import org.unibl.etf.soundflow.exceptions.NotFoundException;
+import org.unibl.etf.soundflow.exceptions.ValidationException;
 import org.unibl.etf.soundflow.models.dto.Client;
 import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.enums.AuthProvider;
@@ -46,6 +47,11 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    public ClientEntity findByEmail(String email) throws NotFoundException {
+        return clientEntityRepository.findByEmail(email).orElseThrow(NotFoundException::new);
+    }
+
+    @Override
     public Client registration(ClientRequest clientRequest) throws DuplicateValueException, InternalServerException {
         if(clientRequest.getAuthProvider() == AuthProvider.LOCAL) {
             if(clientEntityRepository.existsByUsername(clientRequest.getUsername())) {
@@ -73,5 +79,18 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(NotFoundException::new);
         client.setIsVerified(true);
         clientEntityRepository.saveAndFlush(client);
+    }
+
+    @Override
+    public Client setNewPassword(ClientEntity client, String newPassword) {
+        if(isPasswordInvalid(newPassword))
+            throw new ValidationException("Password contains not allowed characters");
+        client.setPassword(passwordEncoder.encode(newPassword));
+        clientEntityRepository.saveAndFlush(client);
+        return modelMapper.map(client, Client.class);
+    }
+
+    private boolean isPasswordInvalid(String password) {
+        return password.contains("@");
     }
 }

@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.unibl.etf.soundflow.exceptions.NotFoundException;
 import org.unibl.etf.soundflow.exceptions.UnauthorizedException;
+import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.entities.VerifyTokenEntity;
 import org.unibl.etf.soundflow.repositories.VerifyTokenEntityRepository;
 import org.unibl.etf.soundflow.services.ClientService;
@@ -23,14 +24,24 @@ public class VerifyTokenServiceImpl implements VerifyTokenService {
     }
 
     @Override
-    public boolean isValid(String token) {
+    public boolean isVerificationValid(String token) {
+        ClientEntity entity = isValid(token);
+        clientService.setIsVerified(entity.getId());
+        return true;
+    }
+
+    @Override
+    public ClientEntity isResetPasswordTokenValid(String token) {
+        return isValid(token);
+    }
+
+    private ClientEntity isValid(String token) {
         VerifyTokenEntity entity = verifyTokenEntityRepository
                 .findByToken(token)
                 .orElseThrow(NotFoundException::new);
         if(entity.getExpiry().isBefore(Instant.now()))
             throw new UnauthorizedException("Token expired");
-        clientService.setIsVerified(entity.getClient().getId());
         verifyTokenEntityRepository.deleteById(entity.getId());
-        return true;
+        return entity.getClient();
     }
 }

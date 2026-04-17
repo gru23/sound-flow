@@ -16,13 +16,8 @@ import org.unibl.etf.soundflow.models.dto.JwtClient;
 import org.unibl.etf.soundflow.models.dto.LoginResponse;
 import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.entities.RefreshTokenEntity;
-import org.unibl.etf.soundflow.models.requests.auth.LoginRequest;
-import org.unibl.etf.soundflow.models.requests.auth.LogoutRequest;
-import org.unibl.etf.soundflow.models.requests.auth.RefreshRequest;
-import org.unibl.etf.soundflow.services.AuthService;
-import org.unibl.etf.soundflow.services.ClientService;
-import org.unibl.etf.soundflow.services.RefreshTokenService;
-import org.unibl.etf.soundflow.services.VerifyTokenService;
+import org.unibl.etf.soundflow.models.requests.auth.*;
+import org.unibl.etf.soundflow.services.*;
 
 import java.util.Date;
 
@@ -31,6 +26,7 @@ public class AuthServiceImpl implements AuthService {
     private final ClientService clientService;
     private final RefreshTokenService refreshTokenService;
     private final VerifyTokenService verifyTokenService;
+    private final EmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final ModelMapper modelMapper;
 
@@ -39,17 +35,18 @@ public class AuthServiceImpl implements AuthService {
     @Value("${authorization.token.secret}")
     private String tokenSecret;
 
-    public AuthServiceImpl(AuthenticationManager authenticationManager, ClientService clientService, RefreshTokenService refreshTokenService, VerifyTokenService verifyTokenService, ModelMapper modelMapper) {
+    public AuthServiceImpl(AuthenticationManager authenticationManager, ClientService clientService, RefreshTokenService refreshTokenService, VerifyTokenService verifyTokenService, EmailService emailService, ModelMapper modelMapper) {
         this.authenticationManager = authenticationManager;
         this.clientService = clientService;
         this.refreshTokenService = refreshTokenService;
         this.verifyTokenService = verifyTokenService;
+        this.emailService = emailService;
         this.modelMapper = modelMapper;
     }
 
     @Override
     public void verify(String token) {
-        if(!verifyTokenService.isValid(token))
+        if(!verifyTokenService.isVerificationValid(token))
             throw new UnauthorizedException("Invalid token");
     }
 
@@ -106,6 +103,22 @@ public class AuthServiceImpl implements AuthService {
         return generateJwt(new JwtClient(
                             token.getClient().getId(), token.getClient().getUsername(), null)
         );
+    }
+
+    @Override
+    public void requestResetingPassword(ResetPasswordRequest request) {
+        ClientEntity client;
+        if(request.getIdentifier().contains("@"))
+            client = clientService.findByEmail(request.getIdentifier());
+        else
+            client = modelMapper.map(clientService.findByUsername(request.getIdentifier()), ClientEntity.class);
+        emailService.sendResetPasswordEmail(client);
+    }
+
+    @Override
+    public void resetPassword(ConfirmResetPasswordRequest request) {
+        ClientEntity client = verifyTokenService.isResetPasswordTokenValid(request.getToken());
+        clientService.setNewPassword(client, request.getNewPassword());
     }
 
     private String generateJwt(JwtClient client) {
