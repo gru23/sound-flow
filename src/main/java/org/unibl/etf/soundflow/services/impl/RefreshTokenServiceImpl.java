@@ -14,6 +14,7 @@ import org.unibl.etf.soundflow.services.RefreshTokenService;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -29,7 +30,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     @Override
     public RefreshTokenEntity generate(ClientEntity client) {
-        Instant expiry = Instant.now().plusSeconds(Long.parseLong(refreshTokenExpirationTime));
+        Instant expiry = Instant.now().plusMillis(Long.parseLong(refreshTokenExpirationTime));
         byte[] randomBytes = new byte[64]; // 512 bits
         new SecureRandom().nextBytes(randomBytes);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
@@ -39,12 +40,15 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
-    public void revoke(Integer clientId) throws NotFoundException {
-        RefreshTokenEntity token = refreshTokenEntityRepository
-                .findByClient_IdAndRevokedFalse(clientId)
-                .orElseThrow(NotFoundException::new);
-        token.setRevoked(true);
-        refreshTokenEntityRepository.saveAndFlush(token);
+    public void revoke(String token) throws NotFoundException {
+        Optional<RefreshTokenEntity> optional = refreshTokenEntityRepository
+                .findAllByTokenAndRevokedFalse(token)
+                .stream()
+                .findFirst();
+        if(optional.isEmpty())
+            throw new NotFoundException();
+        optional.get().setRevoked(true);
+        refreshTokenEntityRepository.saveAndFlush(optional.get());
     }
 
     /**
@@ -56,23 +60,24 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     public Boolean isLogoutRequestValid(LogoutRequest request)
             throws UnauthorizedException, NotFoundException {
-        RefreshTokenEntity token = refreshTokenEntityRepository
-                .findByClient_IdAndRevokedFalse(request.getClientId())
-                .orElseThrow(() -> new NotFoundException(
-                        "Client not found or not signed in")
-                );
-        if(token.getToken().equals(request.getRefreshToken()) && isNotExpired(token))
+        Optional<RefreshTokenEntity> optional = refreshTokenEntityRepository
+                .findAllByClient_IdAndRevokedFalse(request.getClientId())
+                .stream()
+                .filter(token -> token.getToken().equals(request.getRefreshToken()))
+                .findFirst();
+        if(optional.isPresent() && isNotExpired(optional.get()))
             return true;
         throw new UnauthorizedException("Invalid refresh token");
     }
 
     @Override
     public RefreshTokenEntity getToken(String token) throws UnauthorizedException {
-        RefreshTokenEntity tokenEntity = refreshTokenEntityRepository
-                .findByTokenAndRevokedFalse(token)
-                .orElseThrow(UnauthorizedException::new);
-        if(isNotExpired(tokenEntity))
-            return tokenEntity;
+        Optional<RefreshTokenEntity> optional = refreshTokenEntityRepository
+                .findAllByTokenAndRevokedFalse(token)
+                .stream()
+                .findFirst();
+        if(optional.isPresent() && isNotExpired(optional.get()))
+            return optional.get();
         throw new UnauthorizedException("Invalid refresh token");
     }
 

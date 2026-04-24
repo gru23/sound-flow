@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.unibl.etf.soundflow.models.dto.Client;
 import org.unibl.etf.soundflow.models.dto.LoginResponse;
+import org.unibl.etf.soundflow.models.enums.AuthProvider;
 import org.unibl.etf.soundflow.models.requests.ClientRequest;
 import org.unibl.etf.soundflow.models.requests.auth.*;
 import org.unibl.etf.soundflow.services.AuthService;
@@ -28,7 +29,7 @@ public class AuthController {
 
     @PostMapping("/registration")
     public Client registration(@RequestBody @Valid ClientRequest clientRequest) {
-        return clientService.registration(clientRequest);
+        return clientService.registration(clientRequest, AuthProvider.LOCAL);
     }
 
     @PostMapping("/logout")

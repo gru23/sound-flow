@@ -17,6 +17,8 @@ import org.unibl.etf.soundflow.repositories.ClientEntityRepository;
 import org.unibl.etf.soundflow.services.ClientService;
 import org.unibl.etf.soundflow.services.EmailService;
 
+import java.util.Random;
+
 @Service
 @Transactional
 public class ClientServiceImpl implements ClientService {
@@ -51,22 +53,21 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Client registration(ClientRequest clientRequest) throws DuplicateValueException, InternalServerException {
-        if(clientRequest.getAuthProvider() == AuthProvider.LOCAL) {
-            if(clientEntityRepository.existsByUsername(clientRequest.getUsername())) {
+    public Client registration(ClientRequest clientRequest, AuthProvider authProvider) throws DuplicateValueException, InternalServerException {
+        if(AuthProvider.LOCAL == authProvider) {
+            if(doesUsernameExist(clientRequest.getUsername())) {
                 throw new DuplicateValueException();
             }
-            ClientEntity entity = modelMapper.map(clientRequest, ClientEntity.class);
-            entity.setPassword(passwordEncoder.encode(entity.getPassword()));
-            entity = clientEntityRepository.saveAndFlush(entity);
-            entityManager.refresh(entity);
-            emailService.sendVerificationEmail(entity);
-            return modelMapper.map(entity, Client.class);
+            Client client = setPasswordAndPersistClient(clientRequest, authProvider);
+//            emailService.sendVerificationEmail(modelMapper.map(client, ClientEntity.class));
+            return client;
         }
-        else if(clientRequest.getAuthProvider() == AuthProvider.GOOGLE) {
-            ClientEntity entity = modelMapper.map(clientRequest, ClientEntity.class);
-            // sta sada? azurirati podatke korisnika? samo azurairt token?
-            return null;
+        else if(AuthProvider.GOOGLE == authProvider) {
+            while(doesUsernameExist(clientRequest.getUsername())) {
+                String newUsername = clientRequest.getUsername() + new Random().nextInt(1000);
+                clientRequest.setUsername(newUsername);
+            }
+            return setPasswordAndPersistClient(clientRequest, authProvider);
         }
         throw new InternalServerException("Unsupported auth provider");
     }
@@ -91,5 +92,19 @@ public class ClientServiceImpl implements ClientService {
 
     private boolean isPasswordInvalid(String password) {
         return password.contains("@");
+    }
+
+    private boolean doesUsernameExist(String username) {
+        return clientEntityRepository.existsByUsername(username);
+    }
+
+    private Client setPasswordAndPersistClient(ClientRequest clientRequest, AuthProvider authProvider) {
+        ClientEntity entity = modelMapper.map(clientRequest, ClientEntity.class);
+        if(AuthProvider.GOOGLE == authProvider)
+            entity.setIsVerified(true);
+        entity.setPassword(passwordEncoder.encode(entity.getPassword()));
+        entity = clientEntityRepository.saveAndFlush(entity);
+        entityManager.refresh(entity);
+        return modelMapper.map(entity, Client.class);
     }
 }

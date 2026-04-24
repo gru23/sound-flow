@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import org.unibl.etf.soundflow.models.enums.AuthProvider;
 
 @Getter
 @Setter
@@ -45,15 +44,15 @@ public class ClientEntity {
     @Column(name = "is_verified", nullable = false)
     private Boolean isVerified;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "auth_provider", nullable = false)
-    private AuthProvider authProvider;
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "auth_provider", nullable = false)
+//    private AuthProvider authProvider;
 
     @PrePersist
     public void prePersist() {
-        if (this.authProvider == null) {
-            this.authProvider = AuthProvider.LOCAL;
-        }
+//        if (this.authProvider == null) {
+//            this.authProvider = AuthProvider.LOCAL;
+//        }
         if(this.isVerified == null) {
             this.isVerified = false;
         }

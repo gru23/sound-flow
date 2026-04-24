@@ -1,10 +1,7 @@
 package org.unibl.etf.soundflow.services.impl;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,29 +17,24 @@ import org.unibl.etf.soundflow.models.entities.RefreshTokenEntity;
 import org.unibl.etf.soundflow.models.requests.auth.*;
 import org.unibl.etf.soundflow.services.*;
 
-import java.util.Date;
-
 @Service
 public class AuthServiceImpl implements AuthService {
     private final ClientService clientService;
     private final RefreshTokenService refreshTokenService;
     private final VerifyTokenService verifyTokenService;
     private final EmailService emailService;
+    private final JwtClientDetailsService jwtClientDetailsService;
     private final AuthenticationManager authenticationManager;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${authorization.token.expiration-time}")
-    private String tokenExpirationTime;
-    @Value("${authorization.token.secret}")
-    private String tokenSecret;
-
-    public AuthServiceImpl(AuthenticationManager authenticationManager, ClientService clientService, RefreshTokenService refreshTokenService, VerifyTokenService verifyTokenService, EmailService emailService, ModelMapper modelMapper, PasswordEncoder passwordEncoder) {
+    public AuthServiceImpl(AuthenticationManager authenticationManager, ClientService clientService, RefreshTokenService refreshTokenService, VerifyTokenService verifyTokenService, EmailService emailService, JwtClientDetailsService jwtClientDetailsService, ModelMapper modelMapper, PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.clientService = clientService;
         this.refreshTokenService = refreshTokenService;
         this.verifyTokenService = verifyTokenService;
         this.emailService = emailService;
+        this.jwtClientDetailsService = jwtClientDetailsService;
         this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
     }
@@ -68,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
             if(!clientEntity.getIsVerified())
                 throw new UnauthorizedException("Account is not verified!");
             response = modelMapper.map(clientEntity, LoginResponse.class);
-            response.setAccessToken(generateJwt(client));
+            response.setAccessToken(jwtClientDetailsService.generateJwt(client));
             RefreshTokenEntity refreshToken = refreshTokenService.generate(
                     modelMapper.map(response, ClientEntity.class)
             );
@@ -84,14 +76,14 @@ public class AuthServiceImpl implements AuthService {
     public void logout(LogoutRequest request) {
         if(!refreshTokenService.isLogoutRequestValid(request))
             throw new UnauthorizedException("Invalid refresh token");
-        refreshTokenService.revoke(request.getClientId());
+        refreshTokenService.revoke(request.getRefreshToken());
     }
 
     @Override
     public Client checkClient(String accessToken)
     // public LoginResponse checkClient(CheckClientRequest request)
             throws UnauthorizedException, NotFoundException {
-        String username = parseToken(accessToken).getSubject();
+        String username = jwtClientDetailsService.parseToken(accessToken).getSubject();
         return modelMapper.map(clientService.findByUsername(username), Client.class);
     }
 
@@ -103,7 +95,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public String refreshToken(RefreshRequest request) throws UnauthorizedException {
         RefreshTokenEntity token = refreshTokenService.getToken(request.getRefreshToken());
-        return generateJwt(new JwtClient(
+        return jwtClientDetailsService.generateJwt(new JwtClient(
                             token.getClient().getId(), token.getClient().getUsername(), null)
         );
     }
@@ -126,28 +118,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void changePassword(String token, ChangePasswordRequest request) throws UnauthorizedException {
-        Claims claims = parseToken(token);
+        Claims claims = jwtClientDetailsService.parseToken(token);
         String username = claims.getSubject();
         ClientEntity entity = clientService.findByUsername(username);
 
         if(!passwordEncoder.matches(request.getOldPassword(), entity.getPassword()))
             throw new UnauthorizedException("Invalid old password");
         clientService.setNewPassword(entity, request.getNewPassword());
-    }
-
-    private String generateJwt(JwtClient client) {
-        return Jwts.builder()
-                .setId(client.getId().toString())
-                .setSubject(client.getUsername())
-                .setExpiration(new Date(System.currentTimeMillis() + Long.parseLong(tokenExpirationTime)))
-                .signWith(SignatureAlgorithm.HS512, tokenSecret)
-                .compact();
-    }
-
-    private Claims parseToken(String accessToken) {
-        return Jwts.parser()
-                .setSigningKey(tokenSecret)
-                .parseClaimsJws(accessToken)
-                .getBody();
     }
 }

@@ -2,11 +2,13 @@ package org.unibl.etf.soundflow.models.requests;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.unibl.etf.soundflow.models.enums.AuthProvider;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ClientRequest {
     @NotBlank
     private String name;
@@ -22,6 +24,6 @@ public class ClientRequest {
     @Email
     private String email;
 
-    @NotNull
-    private AuthProvider authProvider;
+//    @NotNull
+//    private AuthProvider authProvider;
 }

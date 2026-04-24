@@ -44,6 +44,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(exec.getData(), exec.getStatus());
     }
 
+    @ExceptionHandler(org.springframework.mail.MailSendException.class)
+    public final ResponseEntity<Object> handleMailSendException(
+            org.springframework.mail.MailSendException e,
+            HandlerMethod handlerMethod) {
+
+        Log log = getLog(handlerMethod);
+        log.error("SMTP connection failed", e);
+
+        // Možeš vratiti jasnu poruku klijentu
+        return new ResponseEntity<>(
+                "SMTP server connection failed. Likely not allowed on this network.",
+                HttpStatus.SERVICE_UNAVAILABLE
+        );
+    }
 
     @ExceptionHandler(Exception.class)
     public final ResponseEntity<Object> handleException(Exception e, HandlerMethod handlerMethod) {
