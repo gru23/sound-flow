@@ -1,6 +1,8 @@
 package org.unibl.etf.soundflow.services;
 
 import org.springframework.web.multipart.MultipartFile;
+import org.unibl.etf.soundflow.models.dto.SeparationStatusResponse;
+import org.unibl.etf.soundflow.models.requests.SeparationRequest;
 
 import java.io.IOException;
 
@@ -11,5 +13,5 @@ public interface AudioService {
      * @throws IOException internal problem with saving file on disc
      */
     void uploadAudio(MultipartFile file) throws IOException;
-    // ovdje ce ici metoda za source separaciju?
+    SeparationStatusResponse submitSeparationRequest(SeparationRequest request);
 }

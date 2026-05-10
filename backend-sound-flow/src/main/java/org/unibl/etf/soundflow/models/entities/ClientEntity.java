@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -47,6 +49,9 @@ public class ClientEntity {
 //    @Enumerated(EnumType.STRING)
 //    @Column(name = "auth_provider", nullable = false)
 //    private AuthProvider authProvider;
+
+    @OneToMany(mappedBy = "client")
+    private List<SeparationJobEntity> jobs;
 
     @PrePersist
     public void prePersist() {

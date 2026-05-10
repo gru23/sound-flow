@@ -1,11 +1,10 @@
 package org.unibl.etf.soundflow.controllers;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.unibl.etf.soundflow.models.dto.SeparationStatusResponse;
+import org.unibl.etf.soundflow.models.requests.SeparationRequest;
 import org.unibl.etf.soundflow.services.AudioService;
 
 @RestController
@@ -27,5 +26,10 @@ public class AudioController {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error uploading file.");
         }
+    }
+
+    @PostMapping("/separation")
+    public ResponseEntity<SeparationStatusResponse> separate(@ModelAttribute SeparationRequest request) {
+        return ResponseEntity.ok(audioService.submitSeparationRequest(request));
     }
 }
