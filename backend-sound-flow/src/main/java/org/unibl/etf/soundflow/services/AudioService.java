@@ -14,4 +14,5 @@ public interface AudioService {
      */
     void uploadAudio(MultipartFile file) throws IOException;
     SeparationStatusResponse submitSeparationRequest(SeparationRequest request);
+    SeparationStatusResponse getSeparationStatus(Integer jobId);
 }

@@ -32,4 +32,9 @@ public class AudioController {
     public ResponseEntity<SeparationStatusResponse> separate(@ModelAttribute SeparationRequest request) {
         return ResponseEntity.ok(audioService.submitSeparationRequest(request));
     }
+
+    @GetMapping("/status/{jobId}")
+    public ResponseEntity<SeparationStatusResponse> getStatus(@PathVariable Integer jobId) {
+        return ResponseEntity.ok(audioService.getSeparationStatus(jobId));
+    }
 }

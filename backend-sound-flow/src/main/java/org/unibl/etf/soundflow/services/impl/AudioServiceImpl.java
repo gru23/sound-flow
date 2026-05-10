@@ -64,6 +64,12 @@ public class AudioServiceImpl implements AudioService {
         return new SeparationStatusResponse(job.getId(), job.getStatus(), null);
     }
 
+    @Override
+    public SeparationStatusResponse getSeparationStatus(Integer jobId) {
+        SeparationJobEntity job = separationJobService.getSeparationJob(jobId);
+        return new SeparationStatusResponse(job.getId(), job.getStatus(), null);
+    }
+
     private String storageAudioFile(MultipartFile audioFile, String storagePath) {
         String filenameDecoded = URLDecoder.decode(audioFile.getOriginalFilename(), StandardCharsets.UTF_8);
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
