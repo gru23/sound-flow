@@ -1,6 +1,11 @@
 package org.unibl.etf.soundflow.services.impl;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.unibl.etf.soundflow.config.RabbitConfig;
@@ -8,6 +13,7 @@ import org.unibl.etf.soundflow.models.dto.SeparationMessage;
 import org.unibl.etf.soundflow.models.dto.SeparationStatusResponse;
 import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.entities.SeparationJobEntity;
+import org.unibl.etf.soundflow.models.enums.SeparationStatus;
 import org.unibl.etf.soundflow.models.requests.SeparationRequest;
 import org.unibl.etf.soundflow.services.AudioService;
 import org.unibl.etf.soundflow.services.ClientService;
@@ -65,9 +71,23 @@ public class AudioServiceImpl implements AudioService {
     }
 
     @Override
-    public SeparationStatusResponse getSeparationStatus(Integer jobId) {
+    public SeparationStatusResponse getSeparationStatus(String jobId) {
         SeparationJobEntity job = separationJobService.getSeparationJob(jobId);
-        return new SeparationStatusResponse(job.getId(), job.getStatus(), null);
+
+        String resultUrl = null;
+        if(job.getStatus() == SeparationStatus.DONE && job.getSeparatedPath() != null)
+            resultUrl = "http://localhost:8080/audio/separations/" + job.getId();
+
+        return new SeparationStatusResponse(job.getId(), job.getStatus(), resultUrl);
+    }
+
+    @Override
+    public ResponseEntity<Resource> downloadSeparatedZip(String jobId) {
+        FileSystemResource resource = separationJobService.getSeparatedZip(jobId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + resource.getFilename())
+                .contentType(MediaType.parseMediaType("application/zip"))
+                .body(resource);
     }
 
     private String storageAudioFile(MultipartFile audioFile, String storagePath) {

@@ -1,5 +1,6 @@
 package org.unibl.etf.soundflow.controllers;
 
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,7 +35,12 @@ public class AudioController {
     }
 
     @GetMapping("/status/{jobId}")
-    public ResponseEntity<SeparationStatusResponse> getStatus(@PathVariable Integer jobId) {
+    public ResponseEntity<SeparationStatusResponse> getStatus(@PathVariable String jobId) {
         return ResponseEntity.ok(audioService.getSeparationStatus(jobId));
+    }
+
+    @GetMapping("/separations/{jobId}")
+    public ResponseEntity<Resource> downloadSeparated(@PathVariable String jobId) {
+        return audioService.downloadSeparatedZip(jobId);
     }
 }
