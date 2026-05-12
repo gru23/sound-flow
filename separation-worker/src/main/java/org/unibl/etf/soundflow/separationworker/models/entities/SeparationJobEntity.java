@@ -20,6 +20,8 @@ public class SeparationJobEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    private Integer clientId;
+
     @Enumerated(EnumType.STRING)
     private SeparationOption option;
 
@@ -34,18 +36,6 @@ public class SeparationJobEntity {
     private LocalDateTime finishedAt;
 
     private String errorMessage;
-
-    @ManyToOne
-    @JoinColumn(name = "client_id")
-    private ClientEntity client;
-
-    public SeparationJobEntity(SeparationOption option, String sourcePath, ClientEntity client) {
-        this.option = option;
-        status = SeparationStatus.QUEUED;
-        this.sourcePath = sourcePath;
-        createdAt = LocalDateTime.now();
-        this.client = client;
-    }
 }
 
 
