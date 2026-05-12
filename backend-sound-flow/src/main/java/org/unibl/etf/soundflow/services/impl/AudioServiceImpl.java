@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.unibl.etf.soundflow.config.RabbitConfig;
+import org.unibl.etf.soundflow.exceptions.ValidationException;
 import org.unibl.etf.soundflow.models.dto.SeparationMessage;
 import org.unibl.etf.soundflow.models.dto.SeparationStatusResponse;
 import org.unibl.etf.soundflow.models.entities.ClientEntity;
@@ -56,6 +57,8 @@ public class AudioServiceImpl implements AudioService {
 
     @Override
     public SeparationStatusResponse submitSeparationRequest(SeparationRequest request) {
+        if(request.getFile().isEmpty())
+            throw new ValidationException("No file attached to separation request");
         ClientEntity client = clientService.findById(request.getClientId());
         String storagePath = generateUploadPath(client.getUsername());
         String filePath = storageAudioFile(request.getFile(), storagePath);
@@ -92,8 +95,7 @@ public class AudioServiceImpl implements AudioService {
 
     private String storageAudioFile(MultipartFile audioFile, String storagePath) {
         String filenameDecoded = URLDecoder.decode(audioFile.getOriginalFilename(), StandardCharsets.UTF_8);
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-        String filePath = storagePath + File.separator + timestamp + "_" + filenameDecoded;
+        String filePath = storagePath + File.separator + filenameDecoded;
         File targetFile = new File(filePath);
 
         try {
@@ -106,7 +108,10 @@ public class AudioServiceImpl implements AudioService {
     }
 
     private String generateUploadPath(String clientUsername) {
-        String tempFolder = "C:\\Users\\Administrator\\Desktop\\Fakultet\\SoundFlow\\separation\\uploads\\" + clientUsername;
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String tempFolder =
+                "C:\\Users\\Administrator\\Desktop\\Fakultet\\SoundFlow\\separation\\uploads\\" +
+                        clientUsername + File.separator + timestamp;
         File clientFolder = new File(tempFolder);
         if (!clientFolder.exists())
             clientFolder.mkdirs();

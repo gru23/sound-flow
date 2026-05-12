@@ -1,6 +1,5 @@
 package org.unibl.etf.soundflow.models.requests;
 
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,7 +10,7 @@ public class SeparationRequest {
     @NotNull
     private Integer clientId;
 
-    @NotEmpty
+    @NotNull
     private MultipartFile file;
 
     @NotNull
