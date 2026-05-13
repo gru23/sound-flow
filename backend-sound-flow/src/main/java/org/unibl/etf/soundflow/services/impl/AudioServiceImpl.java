@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.unibl.etf.soundflow.config.RabbitConfig;
+import org.unibl.etf.soundflow.exceptions.ForbiddenException;
 import org.unibl.etf.soundflow.exceptions.ValidationException;
 import org.unibl.etf.soundflow.models.dto.SeparationMessage;
 import org.unibl.etf.soundflow.models.dto.SeparationStatusResponse;
@@ -18,6 +19,7 @@ import org.unibl.etf.soundflow.models.enums.SeparationStatus;
 import org.unibl.etf.soundflow.models.requests.SeparationRequest;
 import org.unibl.etf.soundflow.services.AudioService;
 import org.unibl.etf.soundflow.services.ClientService;
+import org.unibl.etf.soundflow.services.JwtClientDetailsService;
 import org.unibl.etf.soundflow.services.SeparationJobService;
 
 import java.io.File;
@@ -31,11 +33,13 @@ import java.time.format.DateTimeFormatter;
 public class AudioServiceImpl implements AudioService {
     private final ClientService clientService;
     private final SeparationJobService separationJobService;
+    private final JwtClientDetailsService jwtClientDetailsService;
     private final RabbitTemplate rabbitTemplate;
 
-    public AudioServiceImpl(ClientService clientService, SeparationJobService separationJobService, RabbitTemplate rabbitTemplate) {
+    public AudioServiceImpl(ClientService clientService, SeparationJobService separationJobService, JwtClientDetailsService jwtClientDetailsService, RabbitTemplate rabbitTemplate) {
         this.clientService = clientService;
         this.separationJobService = separationJobService;
+        this.jwtClientDetailsService = jwtClientDetailsService;
         this.rabbitTemplate = rabbitTemplate;
     }
 
@@ -85,7 +89,9 @@ public class AudioServiceImpl implements AudioService {
     }
 
     @Override
-    public ResponseEntity<Resource> downloadSeparatedZip(String jobId) {
+    public ResponseEntity<Resource> downloadSeparatedZip(String jobId, String token) {
+        if(doesJobNotBelongToClient(token, jobId))
+            throw new ForbiddenException("Unauthorized download");
         FileSystemResource resource = separationJobService.getSeparatedZip(jobId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + resource.getFilename())
@@ -116,5 +122,14 @@ public class AudioServiceImpl implements AudioService {
         if (!clientFolder.exists())
             clientFolder.mkdirs();
         return tempFolder;
+    }
+
+    private boolean doesJobNotBelongToClient(String token, String jobId) {
+        String clientId = jwtClientDetailsService.parseToken(token).getId();
+        ClientEntity client = clientService.findById(Integer.valueOf(clientId));
+        return client.
+                getJobs().
+                stream().
+                noneMatch(j -> j.getId().equals(jobId));
     }
 }

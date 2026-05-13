@@ -17,5 +17,5 @@ public interface AudioService {
     void uploadAudio(MultipartFile file) throws IOException;
     SeparationStatusResponse submitSeparationRequest(SeparationRequest request);
     SeparationStatusResponse getSeparationStatus(String jobId);
-    ResponseEntity<Resource> downloadSeparatedZip(String jobId);
+    ResponseEntity<Resource> downloadSeparatedZip(String jobId, String token);
 }

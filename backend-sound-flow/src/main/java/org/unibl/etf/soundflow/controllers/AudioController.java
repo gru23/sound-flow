@@ -40,7 +40,11 @@ public class AudioController {
     }
 
     @GetMapping("/separations/{jobId}")
-    public ResponseEntity<Resource> downloadSeparated(@PathVariable String jobId) {
-        return audioService.downloadSeparatedZip(jobId);
+    public ResponseEntity<Resource> downloadSeparated(
+            @PathVariable String jobId,
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        String token = authHeader.replace("Bearer ", "");
+        return audioService.downloadSeparatedZip(jobId, token);
     }
 }
