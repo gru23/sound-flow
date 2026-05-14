@@ -30,4 +30,9 @@ public class ClientController {
         clientService.changePassword(token, request);
         return ResponseEntity.ok("Password changed successfully");
     }
+
+    @GetMapping("/username-available")
+    public ResponseEntity<Boolean> isUsernameAvailable(@RequestParam String username) {
+        return ResponseEntity.ok(!clientService.doesUsernameExist(username));
+    }
 }
