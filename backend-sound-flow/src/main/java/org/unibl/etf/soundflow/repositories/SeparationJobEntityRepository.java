@@ -4,4 +4,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.unibl.etf.soundflow.models.entities.SeparationJobEntity;
 
 public interface SeparationJobEntityRepository extends JpaRepository<SeparationJobEntity, String> {
+//    List<SeparationJobEntity> findAllByClient_Id(Integer clientId);
 }
