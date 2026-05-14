@@ -1,21 +1,22 @@
 package org.unibl.etf.soundflow.services.impl;
 
+import io.jsonwebtoken.Claims;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.unibl.etf.soundflow.exceptions.DuplicateValueException;
-import org.unibl.etf.soundflow.exceptions.InternalServerException;
-import org.unibl.etf.soundflow.exceptions.NotFoundException;
-import org.unibl.etf.soundflow.exceptions.ValidationException;
+import org.unibl.etf.soundflow.exceptions.*;
 import org.unibl.etf.soundflow.models.dto.Client;
 import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.enums.AuthProvider;
 import org.unibl.etf.soundflow.models.requests.ClientRequest;
+import org.unibl.etf.soundflow.models.requests.ClientUpdateRequest;
+import org.unibl.etf.soundflow.models.requests.auth.ChangePasswordRequest;
 import org.unibl.etf.soundflow.repositories.ClientEntityRepository;
 import org.unibl.etf.soundflow.services.ClientService;
 import org.unibl.etf.soundflow.services.EmailService;
+import org.unibl.etf.soundflow.services.JwtClientDetailsService;
 
 import java.util.Random;
 
@@ -24,13 +25,15 @@ import java.util.Random;
 public class ClientServiceImpl implements ClientService {
     private final ClientEntityRepository clientEntityRepository;
     private final EmailService emailService;
+    private final JwtClientDetailsService jwtClientDetailsService;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final EntityManager entityManager;
 
-    public ClientServiceImpl(ClientEntityRepository clientEntityRepository, EmailService emailService, ModelMapper modelMapper, PasswordEncoder passwordEncoder, EntityManager entityManager) {
+    public ClientServiceImpl(ClientEntityRepository clientEntityRepository, EmailService emailService, JwtClientDetailsService jwtClientDetailsService, ModelMapper modelMapper, PasswordEncoder passwordEncoder, EntityManager entityManager) {
         this.clientEntityRepository = clientEntityRepository;
         this.emailService = emailService;
+        this.jwtClientDetailsService = jwtClientDetailsService;
         this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
         this.entityManager = entityManager;
@@ -88,6 +91,30 @@ public class ClientServiceImpl implements ClientService {
         client.setPassword(passwordEncoder.encode(newPassword));
         clientEntityRepository.saveAndFlush(client);
         return modelMapper.map(client, Client.class);
+    }
+
+    @Override
+    public Client update(Integer id, ClientUpdateRequest client) {
+        ClientEntity entity = findById(id);
+        entity.setName(client.getName());
+        entity.setSurname(client.getSurname());
+        // mora se poslat' verifikacioni mail
+        entity.setEmail(client.getEmail());
+        // provjeriti da li je unikatan username
+        // enpoint za provjeru jedinistvenosti usernamea? xhr
+        entity.setUsername(client.getUsername());
+        return modelMapper.map(entity, Client.class);
+    }
+
+    @Override
+    public void changePassword(String token, ChangePasswordRequest request) throws UnauthorizedException {
+        Claims claims = jwtClientDetailsService.parseToken(token);
+        String username = claims.getSubject();
+        ClientEntity entity = findByUsername(username);
+
+        if(!passwordEncoder.matches(request.getOldPassword(), entity.getPassword()))
+            throw new UnauthorizedException("Invalid old password");
+        setNewPassword(entity, request.getNewPassword());
     }
 
     private boolean isPasswordInvalid(String password) {

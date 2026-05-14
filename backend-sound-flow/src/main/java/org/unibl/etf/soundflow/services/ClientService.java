@@ -5,6 +5,8 @@ import org.unibl.etf.soundflow.models.dto.Client;
 import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.enums.AuthProvider;
 import org.unibl.etf.soundflow.models.requests.ClientRequest;
+import org.unibl.etf.soundflow.models.requests.ClientUpdateRequest;
+import org.unibl.etf.soundflow.models.requests.auth.ChangePasswordRequest;
 
 public interface ClientService {
     ClientEntity findById(Integer id) throws NotFoundException;
@@ -14,4 +16,7 @@ public interface ClientService {
     Client registration(ClientRequest clientRequest, AuthProvider authProvider);
     void setIsVerified(int id);
     Client setNewPassword(ClientEntity client, String newPassword);
+
+    Client update(Integer id, ClientUpdateRequest client);
+    void changePassword(String token, ChangePasswordRequest request);
 }
