@@ -50,8 +50,11 @@ public class ClientEntity {
 //    @Column(name = "auth_provider", nullable = false)
 //    private AuthProvider authProvider;
 
-    @OneToMany(mappedBy = "client")
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SeparationJobEntity> jobs;
+
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RefreshTokenEntity> tokens;
 
     @PrePersist
     public void prePersist() {

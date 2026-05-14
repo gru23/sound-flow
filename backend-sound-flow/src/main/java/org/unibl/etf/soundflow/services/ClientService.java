@@ -13,6 +13,8 @@ public interface ClientService {
     ClientEntity findByUsername(String username) throws NotFoundException;
 //    ClientEntity findByEmailAndAuthProvider(String email, AuthProvider authProvider) throws NotFoundException;
     ClientEntity findByEmail(String email) throws NotFoundException;
+    void delete(Integer id);
+
     Client registration(ClientRequest clientRequest, AuthProvider authProvider);
     void setIsVerified(int id);
     Client setNewPassword(ClientEntity client, String newPassword);

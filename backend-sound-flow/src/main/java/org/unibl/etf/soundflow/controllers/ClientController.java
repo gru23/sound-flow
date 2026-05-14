@@ -46,4 +46,10 @@ public class ClientController {
     public ResponseEntity<List<SeparationJob>> getAllSeparations(@PathVariable Integer clientId) {
         return ResponseEntity.ok(separationJobService.getAllByClientId(clientId));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        clientService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }

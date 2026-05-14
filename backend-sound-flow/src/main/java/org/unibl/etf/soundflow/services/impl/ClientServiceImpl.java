@@ -56,6 +56,13 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @Transactional
+    public void delete(Integer id) {
+        ClientEntity entity = findById(id);
+        clientEntityRepository.delete(entity);
+    }
+
+    @Override
     public Client registration(ClientRequest clientRequest, AuthProvider authProvider) throws DuplicateValueException, InternalServerException {
         if(AuthProvider.LOCAL == authProvider) {
             if(doesUsernameExist(clientRequest.getUsername())) {
