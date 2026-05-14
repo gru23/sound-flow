@@ -18,7 +18,6 @@ import org.unibl.etf.soundflow.services.ClientService;
 import org.unibl.etf.soundflow.services.EmailService;
 import org.unibl.etf.soundflow.services.JwtClientDetailsService;
 
-import java.util.Optional;
 import java.util.Random;
 
 @Service
