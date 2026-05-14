@@ -18,6 +18,7 @@ import org.unibl.etf.soundflow.services.ClientService;
 import org.unibl.etf.soundflow.services.EmailService;
 import org.unibl.etf.soundflow.services.JwtClientDetailsService;
 
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -94,15 +95,19 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Client update(Integer id, ClientUpdateRequest client) {
+    public Client update(Integer id, ClientUpdateRequest request) {
         ClientEntity entity = findById(id);
-        entity.setName(client.getName());
-        entity.setSurname(client.getSurname());
-        // mora se poslat' verifikacioni mail
-        entity.setEmail(client.getEmail());
-        // provjeriti da li je unikatan username
-        // enpoint za provjeru jedinistvenosti usernamea? xhr
-        entity.setUsername(client.getUsername());
+        entity.setName(request.getName());
+        entity.setSurname(request.getSurname());
+        if(!request.getEmail().equals(entity.getEmail())) {
+            emailService.sendVerificationEmail(entity);
+            entity.setIsVerified(false);
+        }
+        entity.setEmail(request.getEmail());
+        if(!canUsernameBeUpdated(entity, request.getUsername()))
+            throw new DuplicateValueException("Username not available");
+        entity.setUsername(request.getUsername());
+        clientEntityRepository.saveAndFlush(entity);
         return modelMapper.map(entity, Client.class);
     }
 
@@ -117,12 +122,13 @@ public class ClientServiceImpl implements ClientService {
         setNewPassword(entity, request.getNewPassword());
     }
 
-    private boolean isPasswordInvalid(String password) {
-        return password.contains("@");
+    @Override
+    public boolean doesUsernameExist(String username) {
+        return clientEntityRepository.existsByUsername(username);
     }
 
-    private boolean doesUsernameExist(String username) {
-        return clientEntityRepository.existsByUsername(username);
+    private boolean isPasswordInvalid(String password) {
+        return password.contains("@");
     }
 
     private Client setPasswordAndPersistClient(ClientRequest clientRequest, AuthProvider authProvider) {
@@ -133,5 +139,11 @@ public class ClientServiceImpl implements ClientService {
         entity = clientEntityRepository.saveAndFlush(entity);
         entityManager.refresh(entity);
         return modelMapper.map(entity, Client.class);
+    }
+
+    private boolean canUsernameBeUpdated(ClientEntity client, String newUsername) {
+        if(client.getUsername().equals(newUsername))
+            return true;
+        return clientEntityRepository.findByUsername(newUsername).isEmpty();
     }
 }
