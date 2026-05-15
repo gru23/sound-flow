@@ -51,6 +51,12 @@ public class SeparationJobServiceImpl implements SeparationJobService {
     }
 
     @Override
+    public void delete(String id) {
+        getById(id);
+        separationJobEntityRepository.deleteById(id);
+    }
+
+    @Override
     public SeparationJobEntity getSeparationJob(String jobId) {
         return separationJobEntityRepository
                 .findById(jobId)

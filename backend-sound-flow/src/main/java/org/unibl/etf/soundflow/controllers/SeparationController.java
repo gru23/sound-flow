@@ -1,10 +1,7 @@
 package org.unibl.etf.soundflow.controllers;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.unibl.etf.soundflow.models.dto.SeparationJob;
 import org.unibl.etf.soundflow.services.SeparationJobService;
 
@@ -20,5 +17,11 @@ public class SeparationController {
     @GetMapping("/{id}")
     public ResponseEntity<SeparationJob> getById(@PathVariable String id) {
         return ResponseEntity.ok(separationJobService.getById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        separationJobService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
