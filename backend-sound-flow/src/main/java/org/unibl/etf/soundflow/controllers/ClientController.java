@@ -23,9 +23,20 @@ public class ClientController {
         this.separationJobService = separationJobService;
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Client> getById(@PathVariable Integer id) {
+        return ResponseEntity.ok(clientService.getById(id));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Client> update(@PathVariable Integer id, @RequestBody @Valid ClientUpdateRequest client) {
         return ResponseEntity.ok(clientService.update(id, client));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        clientService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/change-password")
@@ -45,11 +56,5 @@ public class ClientController {
     @GetMapping("/{clientId}/separations")
     public ResponseEntity<List<SeparationJob>> getAllSeparations(@PathVariable Integer clientId) {
         return ResponseEntity.ok(separationJobService.getAllByClientId(clientId));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        clientService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 }

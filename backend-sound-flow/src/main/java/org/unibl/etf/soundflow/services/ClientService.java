@@ -22,4 +22,5 @@ public interface ClientService {
     Client update(Integer id, ClientUpdateRequest client);
     void changePassword(String token, ChangePasswordRequest request);
     boolean doesUsernameExist(String username);
+    Client getById(Integer id);
 }

@@ -133,6 +133,11 @@ public class ClientServiceImpl implements ClientService {
         return clientEntityRepository.existsByUsername(username);
     }
 
+    @Override
+    public Client getById(Integer id) {
+        return modelMapper.map(findById(id), Client.class);
+    }
+
     private boolean isPasswordInvalid(String password) {
         return password.contains("@");
     }
