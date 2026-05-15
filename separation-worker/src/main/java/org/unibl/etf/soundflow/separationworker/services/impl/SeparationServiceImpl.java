@@ -7,8 +7,12 @@ import org.unibl.etf.soundflow.separationworker.models.enums.SeparationStatus;
 import org.unibl.etf.soundflow.separationworker.repositories.SeparationJobEntityRepository;
 import org.unibl.etf.soundflow.separationworker.services.SeparationService;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class SeparationServiceImpl implements SeparationService {
@@ -48,7 +52,28 @@ public class SeparationServiceImpl implements SeparationService {
         try {
             ProcessBuilder pb = new ProcessBuilder(getSeparationCommand(job));
             Process process = pb.start();
-            process.waitFor();
+
+            // Čitanje standardnog izlaza
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println("OUT: " + line);
+                }
+            }
+
+            // Čitanje error izlaza
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.err.println("ERR: " + line);
+                }
+            }
+
+            int exitCode = process.waitFor();
+            System.out.println("Process finished with exit code: " + exitCode);
+
+
+//            process.waitFor();
 
             job.setStatus(SeparationStatus.DONE);
             job.setFinishedAt(LocalDateTime.now());
@@ -65,13 +90,32 @@ public class SeparationServiceImpl implements SeparationService {
         String mapDestination = audioRootPath + ":/app/separated";
         String fileName = new File(job.getSourcePath()).getName();
         String filePath = "/app/input/" + fileName;
-        return new String[]{
-                "docker", "run",
-                "-v", mapSource,
-                "-v", mapDestination,
-                "voxextractlabs/vox-demucs:1.0.0",
-                "demucs", "-n", "htdemucs", filePath
-        };
+
+        List<String> command = new ArrayList<>();
+        command.add("docker");
+        command.add("run");
+        command.add("--rm");
+        command.add("-v");
+        command.add(mapSource);
+        command.add("-v");
+        command.add(mapDestination);
+        command.add("voxextractlabs/vox-demucs:1.0.0");
+        command.add("demucs");
+        command.add("-n");
+        command.add("htdemucs");
+        if (!job.getOption().getCommand().isEmpty()) {
+            command.add(job.getOption().getCommand());
+        }
+        command.add(filePath);
+        return command.toArray(new String[0]);
+//        return new String[]{
+//                "docker", "run",
+//                "-v", mapSource,
+//                "-v", mapDestination,
+//                "voxextractlabs/vox-demucs:1.0.0",
+//                 "demucs", "-n", "htdemucs", job.getOption().getCommand(), filePath
+////                "demucs", "-n", "htdemucs", filePath
+//        };
     }
 }
 /*

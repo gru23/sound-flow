@@ -29,7 +29,7 @@ public class AudioServiceImpl implements AudioService {
                 jobFile.getName().substring(0, jobFile.getName().lastIndexOf('.'));
         File stemsFolder = new File(stemsFolderPath);
         if (!stemsFolder.exists() || stemsFolder.listFiles() == null) {
-            throw new AudioOperationException("No stems found to archive");
+            throw new AudioOperationException("No stems found to archive (separation failed)");
         }
         File zipFile = new File(jobFile.getParent() + "_separation.zip");
 
