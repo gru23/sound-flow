@@ -38,7 +38,7 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/check")
+    @GetMapping("/check")
     public ResponseEntity<Client> check(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         return ResponseEntity.ok(authService.checkClient(token));
