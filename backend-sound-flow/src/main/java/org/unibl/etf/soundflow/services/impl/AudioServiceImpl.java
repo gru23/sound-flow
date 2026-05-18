@@ -15,7 +15,6 @@ import org.unibl.etf.soundflow.models.dto.SeparationMessage;
 import org.unibl.etf.soundflow.models.dto.SeparationStatusResponse;
 import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.entities.SeparationJobEntity;
-import org.unibl.etf.soundflow.models.enums.SeparationStatus;
 import org.unibl.etf.soundflow.models.requests.SeparationRequest;
 import org.unibl.etf.soundflow.services.AudioService;
 import org.unibl.etf.soundflow.services.ClientService;
@@ -75,17 +74,6 @@ public class AudioServiceImpl implements AudioService {
         rabbitTemplate.convertAndSend(RabbitConfig.QUEUE_NAME, message);
 
         return new SeparationStatusResponse(job.getId(), job.getStatus(), null);
-    }
-
-    @Override
-    public SeparationStatusResponse getSeparationStatus(String jobId) {
-        SeparationJobEntity job = separationJobService.getSeparationJob(jobId);
-
-        String resultUrl = null;
-        if(job.getStatus() == SeparationStatus.DONE && job.getSeparatedPath() != null)
-            resultUrl = "http://localhost:8080/audio/separations/" + job.getId();
-
-        return new SeparationStatusResponse(job.getId(), job.getStatus(), resultUrl);
     }
 
     @Override

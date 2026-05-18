@@ -5,6 +5,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
 import org.unibl.etf.soundflow.exceptions.NotFoundException;
 import org.unibl.etf.soundflow.models.dto.SeparationJob;
+import org.unibl.etf.soundflow.models.dto.SeparationStatusResponse;
 import org.unibl.etf.soundflow.models.entities.ClientEntity;
 import org.unibl.etf.soundflow.models.entities.SeparationJobEntity;
 import org.unibl.etf.soundflow.models.enums.SeparationStatus;
@@ -62,6 +63,18 @@ public class SeparationJobServiceImpl implements SeparationJobService {
                 .findById(jobId)
                 .orElseThrow(NotFoundException::new);
     }
+
+    @Override
+    public SeparationStatusResponse getSeparationStatus(String jobId) {
+        SeparationJobEntity job = getSeparationJob(jobId);
+
+        String resultUrl = null;
+        if(job.getStatus() == SeparationStatus.DONE && job.getSeparatedPath() != null)
+            resultUrl = "http://localhost:8080/separations/download/" + job.getId();
+
+        return new SeparationStatusResponse(job.getId(), job.getStatus(), resultUrl);
+    }
+
 
     @Override
     public FileSystemResource getSeparatedZip(String jobId) {

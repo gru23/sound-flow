@@ -2,6 +2,7 @@ package org.unibl.etf.soundflow.services;
 
 import org.springframework.core.io.FileSystemResource;
 import org.unibl.etf.soundflow.models.dto.SeparationJob;
+import org.unibl.etf.soundflow.models.dto.SeparationStatusResponse;
 import org.unibl.etf.soundflow.models.entities.SeparationJobEntity;
 
 import java.util.List;
@@ -12,5 +13,6 @@ public interface SeparationJobService {
     SeparationJobEntity save(SeparationJobEntity separationJobEntity);
     void delete(String id);
     SeparationJobEntity getSeparationJob(String jobId);
+    SeparationStatusResponse getSeparationStatus(String jobId);
     FileSystemResource getSeparatedZip(String jobId);
 }

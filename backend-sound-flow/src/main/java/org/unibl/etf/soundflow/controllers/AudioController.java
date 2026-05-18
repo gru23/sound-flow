@@ -1,11 +1,11 @@
 package org.unibl.etf.soundflow.controllers;
 
-import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.unibl.etf.soundflow.models.dto.SeparationStatusResponse;
-import org.unibl.etf.soundflow.models.requests.SeparationRequest;
 import org.unibl.etf.soundflow.services.AudioService;
 
 @RestController
@@ -27,24 +27,5 @@ public class AudioController {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error uploading file.");
         }
-    }
-
-    @PostMapping("/separation")
-    public ResponseEntity<SeparationStatusResponse> separate(@ModelAttribute SeparationRequest request) {
-        return ResponseEntity.ok(audioService.submitSeparationRequest(request));
-    }
-
-    @GetMapping("/status/{jobId}")
-    public ResponseEntity<SeparationStatusResponse> getStatus(@PathVariable String jobId) {
-        return ResponseEntity.ok(audioService.getSeparationStatus(jobId));
-    }
-
-    @GetMapping("/separations/{jobId}")
-    public ResponseEntity<Resource> downloadSeparated(
-            @PathVariable String jobId,
-            @RequestHeader("Authorization") String authHeader
-    ) {
-        String token = authHeader.replace("Bearer ", "");
-        return audioService.downloadSeparatedZip(jobId, token);
     }
 }
