@@ -44,11 +44,21 @@ public class AuthController {
         return ResponseEntity.ok(authService.checkClient(token));
     }
 
+    /**
+     * Refreshing session generating new Access token based on Refresh token
+     * @param request contains refresh token which will be used for generating new access token
+     * @return new access token
+     */
     @PostMapping("/refresh")
     public ResponseEntity<String> refresh(@RequestBody @Valid RefreshRequest request) {
         return ResponseEntity.ok(authService.refreshToken(request));
     }
 
+    /**
+     * Verifying client's account
+     * @param token client's access token
+     * @return message of confirmation
+     */
     @GetMapping("/verify")
     public ResponseEntity<String> verify(@RequestParam("token") String token) {
         authService.verify(token);
