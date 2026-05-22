@@ -1,6 +1,7 @@
 package org.unibl.etf.soundflow.config;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -11,8 +12,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.unibl.etf.soundflow.models.dto.JwtClient;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.unibl.etf.soundflow.models.dto.JwtClient;
 
 import java.io.IOException;
 
@@ -46,6 +47,11 @@ public class AuthorizationFilter extends OncePerRequestFilter {
             Authentication authentication = new UsernamePasswordAuthenticationToken(jwtUser, null, jwtUser.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        } catch(ExpiredJwtException e) {
+            httpServletResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            httpServletResponse.setContentType("application/json");
+            httpServletResponse.getWriter().write("{\"message\":\"TOKEN_EXPIRED\"}");
+            return;
         } catch (Exception e) {
             logger.error("JWT Authentication failed from: " + httpServletRequest.getRemoteHost(), e);
             httpServletResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "JWT Authentication failed");
