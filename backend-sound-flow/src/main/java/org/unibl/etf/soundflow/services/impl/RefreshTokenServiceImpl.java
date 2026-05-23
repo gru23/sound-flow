@@ -65,9 +65,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 .stream()
                 .filter(token -> token.getToken().equals(request.getRefreshToken()))
                 .findFirst();
-        if(optional.isPresent() && isNotExpired(optional.get()))
-            return true;
-        throw new UnauthorizedException("Invalid refresh token");
+        return optional.isPresent() && isNotExpired(optional.get());
     }
 
     @Override
