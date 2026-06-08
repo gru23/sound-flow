@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class SeparationJob {
     // sta ovdje slati... Mozda mi treba ime pjesme kao polje
     private String id;
+    private String title;
 
     private SeparationOption option;
 

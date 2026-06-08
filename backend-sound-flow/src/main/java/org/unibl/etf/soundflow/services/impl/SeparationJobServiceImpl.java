@@ -34,6 +34,7 @@ public class SeparationJobServiceImpl implements SeparationJobService {
         ClientEntity client = clientService.findById(clientId);
         return client.getJobs()
                 .stream()
+                .filter(j -> SeparationStatus.DONE == j.getStatus())
                 .map(j -> modelMapper.map(j, SeparationJob.class))
                 .collect(Collectors.toList());
     }
