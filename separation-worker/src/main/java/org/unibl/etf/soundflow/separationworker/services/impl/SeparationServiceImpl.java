@@ -75,7 +75,7 @@ public class SeparationServiceImpl implements SeparationService {
 
 //            process.waitFor();
 
-            job.setStatus(SeparationStatus.DONE);
+//            job.setStatus(SeparationStatus.DONE); // probacu setovati nakon zipovanja
             job.setFinishedAt(LocalDateTime.now());
             separationJobEntityRepository.saveAndFlush(job);
         } catch(Exception e) {

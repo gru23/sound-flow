@@ -3,6 +3,7 @@ package org.unibl.etf.soundflow.separationworker.services.impl;
 import org.springframework.stereotype.Service;
 import org.unibl.etf.soundflow.separationworker.exceptions.AudioOperationException;
 import org.unibl.etf.soundflow.separationworker.models.entities.SeparationJobEntity;
+import org.unibl.etf.soundflow.separationworker.models.enums.SeparationStatus;
 import org.unibl.etf.soundflow.separationworker.services.AudioService;
 import org.unibl.etf.soundflow.separationworker.services.SeparationService;
 
@@ -28,31 +29,46 @@ public class AudioServiceImpl implements AudioService {
                 "htdemucs" + File.separator +
                 jobFile.getName().substring(0, jobFile.getName().lastIndexOf('.'));
         File stemsFolder = new File(stemsFolderPath);
-        if (!stemsFolder.exists() || stemsFolder.listFiles() == null) {
+
+        System.out.println("Looking for stems in: " + stemsFolder.getAbsolutePath());
+
+        File[] stemFiles = stemsFolder.listFiles();
+        if (!stemsFolder.exists() || stemFiles == null || stemFiles.length == 0) {
             throw new AudioOperationException("No stems found to archive (separation failed)");
         }
+        System.out.println("Found " + stemFiles.length + " stem files to archive.");
+
         File zipFile = new File(jobFile.getParent() + "_separation.zip");
 
         try (FileOutputStream fos = new FileOutputStream(zipFile);
-             ZipOutputStream zos = new ZipOutputStream(fos)
-        ) {
-            for (File file : stemsFolder.listFiles()) {
+             ZipOutputStream zos = new ZipOutputStream(fos)) {
+
+            byte[] buffer = new byte[8192];
+            for (File file : stemFiles) {
+                System.out.println("Adding file to zip: " + file.getName());
                 try (FileInputStream fis = new FileInputStream(file)) {
                     ZipEntry zipEntry = new ZipEntry(file.getName());
                     zos.putNextEntry(zipEntry);
 
-                    byte[] buffer = new byte[1024];
                     int length;
-                    while ((length = fis.read(buffer)) >= 0) {
+                    while ((length = fis.read(buffer)) != -1) {
                         zos.write(buffer, 0, length);
                     }
                     zos.closeEntry();
                 }
             }
-        } catch(IOException e) {
-            throw new AudioOperationException("Unable to archive separation job");
+            zos.flush();
+            fos.flush();
+            job.setStatus(SeparationStatus.DONE);
+            separationService.update(job);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new AudioOperationException("Unable to archive separation job: " + e.getMessage());
         }
+
+        System.out.println("Zip file created at: " + zipFile.getAbsolutePath());
         job.setSeparatedPath(zipFile.getAbsolutePath());
         separationService.update(job);
     }
+
 }
