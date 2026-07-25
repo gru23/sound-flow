@@ -1,6 +1,7 @@
 package org.unibl.etf.soundflow.services.impl;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -25,11 +26,17 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Service
 public class AudioServiceImpl implements AudioService {
+    @Value("${storage.root}")
+    private String storageRoot;
+
     private final ClientService clientService;
     private final SeparationJobService separationJobService;
     private final JwtClientDetailsService jwtClientDetailsService;
@@ -44,8 +51,9 @@ public class AudioServiceImpl implements AudioService {
 
     @Override
     public void uploadAudio(MultipartFile file) throws IOException {
-        String rootDirectory = System.getProperty("user.dir");
-        String uploadDirectory = rootDirectory + File.separator + "uploads" + File.separator;
+//        String rootDirectory = System.getProperty("user.dir");
+//        String uploadDirectory = rootDirectory + File.separator + "uploads" + File.separator;
+        String uploadDirectory = storageRoot + File.separator + "uploads" + File.separator;
 //        String uploadDir = "C:/Users/Administrator/uploads/";
         String filenameDecoded = URLDecoder.decode(file.getOriginalFilename(), StandardCharsets.UTF_8);
         File targetFile = new File(uploadDirectory + filenameDecoded);
@@ -103,13 +111,26 @@ public class AudioServiceImpl implements AudioService {
 
     private String generateUploadPath(String clientUsername) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-        String tempFolder =
-                "C:\\Users\\Administrator\\Desktop\\Fakultet\\SoundFlow\\separation\\uploads\\" +
-                        clientUsername + File.separator + timestamp;
-        File clientFolder = new File(tempFolder);
-        if (!clientFolder.exists())
-            clientFolder.mkdirs();
-        return tempFolder;
+//        String tempFolder =
+//                "C:\\Users\\Administrator\\Desktop\\Fakultet\\SoundFlow\\separation\\uploads\\" +
+//                        clientUsername + File.separator + timestamp;
+//        File clientFolder = new File(tempFolder);
+//        if (!clientFolder.exists())
+//            clientFolder.mkdirs();
+//        return tempFolder;
+        Path folder = Paths.get(
+                storageRoot,
+                "uploads",
+                clientUsername,
+                timestamp
+        );
+
+        try {
+            Files.createDirectories(folder);
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot create upload directory", e);
+        }
+        return folder.toString();
     }
 
     private boolean doesJobNotBelongToClient(String token, String jobId) {

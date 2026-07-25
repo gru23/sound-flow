@@ -1,0 +1,83 @@
+services:
+  postgres:
+    image: postgres:18.1
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sound_flow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRESQL_ROOT_PASSWORD}"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - soundflow-network
+
+  rabbitmq:
+    image: rabbitmq:4.2.2-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - soundflow-network
+
+  backend:
+    build:
+      context: ./backend-sound-flow
+
+    container_name: backend
+
+    restart: unless-stopped
+
+    depends_on:
+      - postgres
+      - rabbitmq
+
+    ports:
+      - "8080:8080"
+      
+    volumes:
+      - separation_storage:/storage
+
+    env_file:
+      - ./backend-sound-flow/.env
+
+    networks:
+      - soundflow-network
+
+  separation-worker:
+    build:
+      context: ./separation-worker
+
+    container_name: separation-worker
+
+    restart: unless-stopped
+
+    depends_on:
+      - postgres
+      - rabbitmq
+      
+    volumes:
+      - separation_storage:/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    env_file:
+      - ./separation-worker/.env
+
+    networks:
+      - soundflow-network
+
+networks:
+  soundflow-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  separation_storage:
+    name: separation_storage
