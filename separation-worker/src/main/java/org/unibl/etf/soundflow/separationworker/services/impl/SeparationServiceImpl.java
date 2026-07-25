@@ -78,10 +78,44 @@ public class SeparationServiceImpl implements SeparationService {
 //            job.setStatus(SeparationStatus.DONE); // probacu setovati nakon zipovanja
             job.setFinishedAt(LocalDateTime.now());
             separationJobEntityRepository.saveAndFlush(job);
-        } catch(Exception e) {
+        } catch (Exception e) {
             failSeparationJob(job, e.getMessage());
         }
     }
+
+    private String[] getSeparationCommand(SeparationJobEntity job) {
+        File sourceFile = new File(job.getSourcePath());
+        String workingDirectory = sourceFile.getParent();
+
+        List<String> command = new ArrayList<>();
+
+        command.add("docker");
+        command.add("run");
+        command.add("--rm");
+
+        command.add("-v");
+        command.add("separation_storage:/storage");
+
+        command.add("voxextractlabs/vox-demucs:1.0.0");
+
+        command.add("demucs");
+
+        command.add("-n");
+        command.add("htdemucs");
+
+        command.add("-o");
+        command.add(workingDirectory);
+
+        if (!job.getOption().getCommand().isEmpty()) {
+            command.add(job.getOption().getCommand());
+        }
+
+        command.add(job.getSourcePath());
+
+        return command.toArray(new String[0]);
+    }
+}
+    /* ovo je verzija prije docker-composea i Chat GPT-a
     // -v je neki binding putanje mog racunara i dokera, treba obratiti paznju sta
     // ako radim u istom kontejneru sve vrijeme jer to znaci svi fajlovi idu u iste foldere
     private String[] getSeparationCommand(SeparationJobEntity job) {
@@ -96,9 +130,12 @@ public class SeparationServiceImpl implements SeparationService {
         command.add("run");
         command.add("--rm");
         command.add("-v");
-        command.add(mapSource);
-        command.add("-v");
-        command.add(mapDestination);
+//        command.add(mapSource);
+//        command.add("-v");
+//        command.add(mapDestination);
+
+        command.add("separation_storage:/storage");
+
         command.add("voxextractlabs/vox-demucs:1.0.0");
         command.add("demucs");
         command.add("-n");
@@ -117,7 +154,7 @@ public class SeparationServiceImpl implements SeparationService {
 ////                "demucs", "-n", "htdemucs", filePath
 //        };
     }
-}
+} */
 /*
 docker run
 -v C:\Users\Administrator\Desktop\Fakultet\SoundFlow\demucs\input:/app/input
