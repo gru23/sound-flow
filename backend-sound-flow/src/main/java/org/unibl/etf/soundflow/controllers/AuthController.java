@@ -90,6 +90,14 @@ public class AuthController {
         return ResponseEntity.ok("Password reset request has been sent");
     }
 
+    @GetMapping("/reset-confirm")
+    public ResponseEntity<Void> resetConfirmPage(@RequestParam("token") String token) {
+        return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .location(URI.create("/reset-password.html?token=" + token))
+                .build();
+    }
+
     @PostMapping("/reset-confirm")
     public ResponseEntity<String> resetConfirm(@RequestBody @Valid ConfirmResetPasswordRequest request) {
         authService.resetPassword(request);
