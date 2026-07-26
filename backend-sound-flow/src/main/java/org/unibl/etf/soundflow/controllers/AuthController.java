@@ -1,6 +1,7 @@
 package org.unibl.etf.soundflow.controllers;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.unibl.etf.soundflow.models.dto.Client;
@@ -10,6 +11,8 @@ import org.unibl.etf.soundflow.models.requests.ClientRequest;
 import org.unibl.etf.soundflow.models.requests.auth.*;
 import org.unibl.etf.soundflow.services.AuthService;
 import org.unibl.etf.soundflow.services.ClientService;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/auth")
@@ -59,10 +62,26 @@ public class AuthController {
      * @param token client's access token
      * @return message of confirmation
      */
+//    @GetMapping("/verify")
+//    public ResponseEntity<String> verify(@RequestParam("token") String token) {
+//        authService.verify(token);
+//        return ResponseEntity.ok("Account verified successfully");
+//    }
+
     @GetMapping("/verify")
-    public ResponseEntity<String> verify(@RequestParam("token") String token) {
-        authService.verify(token);
-        return ResponseEntity.ok("Account verified successfully");
+    public ResponseEntity<Void> verify(@RequestParam("token") String token) {
+        try {
+            authService.verify(token);
+            return ResponseEntity
+                    .status(HttpStatus.FOUND)
+                    .location(URI.create("/verification-success.html"))
+                    .build();
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.FOUND)
+                    .location(URI.create("/verification-failed.html"))
+                    .build();
+        }
     }
 
     @PostMapping("/reset")

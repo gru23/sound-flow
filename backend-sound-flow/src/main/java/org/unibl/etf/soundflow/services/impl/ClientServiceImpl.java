@@ -69,7 +69,7 @@ public class ClientServiceImpl implements ClientService {
                 throw new DuplicateValueException();
             }
             Client client = setPasswordAndPersistClient(clientRequest, authProvider);
-//            emailService.sendVerificationEmail(modelMapper.map(client, ClientEntity.class));
+            emailService.sendVerificationEmail(modelMapper.map(client, ClientEntity.class));
             return client;
         }
         else if(AuthProvider.GOOGLE == authProvider) {

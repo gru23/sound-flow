@@ -3,6 +3,8 @@ package org.unibl.etf.soundflow.services.impl;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,9 @@ import java.util.UUID;
 public class EmailServiceImpl implements EmailService {
     private final VerifyTokenEntityRepository verifyTokenEntityRepository;
     private final JavaMailSender mailSender;
+
+    private static final Logger log =
+            LoggerFactory.getLogger(EmailServiceImpl.class);
 
     public EmailServiceImpl(VerifyTokenEntityRepository verifyTokenEntityRepository, JavaMailSender mailSender) {
         this.verifyTokenEntityRepository = verifyTokenEntityRepository;
@@ -47,7 +52,8 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private void sendEmail(ClientEntity recipient, String subject, String body) {
-        try{
+        try {
+            log.info("Preparing email to: {}", recipient.getEmail());
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
 
@@ -58,10 +64,20 @@ public class EmailServiceImpl implements EmailService {
             helper.setTo(recipient.getEmail());
             helper.setSubject(subject);
             helper.setText(htmlMsg, true);
+            log.info("Sending email to: {}", recipient.getEmail());
             mailSender.send(mimeMessage);
-        } catch(MessagingException e) {
-            throw new RuntimeException("Failed to send email", e);
+            log.info("Email successfully sent to: {}", recipient.getEmail());
         }
+        catch (MessagingException e) {
+            log.error("Failed while preparing email", e);
+            throw new RuntimeException("Failed to send email", e);
+        } catch (Exception e) {
+            log.error("Unexpected error while sending email", e);
+            throw e;
+        }
+//        } catch(MessagingException e) {
+//            throw new RuntimeException("Failed to send email", e);
+//        }
     }
 
     private String generateVerifyToken(ClientEntity recipient) {
