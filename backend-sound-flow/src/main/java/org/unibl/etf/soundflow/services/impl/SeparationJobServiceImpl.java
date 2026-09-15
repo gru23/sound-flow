@@ -1,6 +1,7 @@
 package org.unibl.etf.soundflow.services.impl;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
 import org.unibl.etf.soundflow.exceptions.NotFoundException;
@@ -22,6 +23,9 @@ public class SeparationJobServiceImpl implements SeparationJobService {
     private final SeparationJobEntityRepository separationJobEntityRepository;
     private final ClientService clientService;
     private final ModelMapper modelMapper;
+
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     public SeparationJobServiceImpl(SeparationJobEntityRepository separationJobEntityRepository, ClientService clientService, ModelMapper modelMapper) {
         this.separationJobEntityRepository = separationJobEntityRepository;
@@ -71,7 +75,7 @@ public class SeparationJobServiceImpl implements SeparationJobService {
 
         String resultUrl = null;
         if(job.getStatus() == SeparationStatus.DONE && job.getSeparatedPath() != null)
-            resultUrl = "http://localhost:8080/separations/download/" + job.getId();
+            resultUrl = baseUrl + "separations/download" + job.getId();//"http://localhost:8080/separations/download/" + job.getId();
 
         return new SeparationStatusResponse(job.getId(), job.getStatus(), resultUrl);
     }
