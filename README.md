@@ -1,32 +1,32 @@
 # Sound Flow
 
-Backend sistem aplikacije **Sound Flow**, razvijen u okviru diplomskog rada. Sistem omogućava registraciju korisnika, upload audio fajlova i asinhronu separaciju audio zapisa na stemove.
+Backend system for the **Sound Flow** application, developed as part of a diploma thesis. The system supports user registration, audio file uploads, and asynchronous separation of audio tracks into stems.
 
-## Sadržaj
+## Contents
 
-- [Pregled sistema](#pregled-sistema)
-- [Arhitektura](#arhitektura)
-- [Tehnologije](#tehnologije)
-- [Pokretanje pomoću Dockera](#pokretanje-pomoću-dockera)
-- [Konfiguracija](#konfiguracija)
+- [System Overview](#system-overview)
+- [Architecture](#architecture)
+- [Technologies](#technologies)
+- [Running with Docker](#running-with-docker)
+- [Configuration](#configuration)
 - [API](#api)
-- [Lokalni razvoj](#lokalni-razvoj)
-- [Baza podataka i storage](#baza-podataka-i-storage)
+- [Local Development](#local-development)
+- [Database and Storage](#database-and-storage)
 
-## Pregled sistema
+## System Overview
 
-Sound Flow je servisna aplikacija za obradu audio fajlova:
+Sound Flow is a service-based application for audio processing:
 
-1. Backend prima zahtjev i čuva ulazni audio fajl.
-2. Zahtjev za separaciju se upisuje kao job i šalje worker servisu kroz RabbitMQ.
-3. Worker pokreće Demucs obradu u Docker kontejneru.
-4. Generisani stemovi se arhiviraju u ZIP fajl.
-5. Klijent prati status job-a i preuzima završeni rezultat.
+1. The backend receives a request and stores the input audio file.
+2. The separation request is stored as a job and sent to the worker service through RabbitMQ.
+3. The worker runs Demucs processing in a Docker container.
+4. The generated stems are archived into a ZIP file.
+5. The client tracks the job status and downloads the completed result.
 
-## Arhitektura
+## Architecture
 
 ```text
-Klijent
+Client
    |
    v
 Backend (Spring Boot :8080) ---- PostgreSQL
@@ -39,53 +39,53 @@ Backend (Spring Boot :8080) ---- PostgreSQL
                                       v
                          Demucs Docker image
 
-Backend i worker dijele Docker volume: /storage
+Backend and worker share a Docker volume: /storage
 ```
 
-Repozitorijum sadrži dva Spring Boot servisa:
+The repository contains two Spring Boot services:
 
-- `backend-sound-flow` - REST API, autentifikacija, korisnici, audio upload i upravljanje separation job-ovima.
-- `separation-worker` - RabbitMQ consumer koji izvršava separaciju i ažurira status job-a.
+- `backend-sound-flow` - REST API, authentication, user management, audio uploads, and separation job management.
+- `separation-worker` - RabbitMQ consumer that performs separation and updates job statuses.
 
-## Tehnologije
+## Technologies
 
 - Java 17
 - Spring Boot 4.x
-- Spring Web, Spring Data JPA i Spring Security
-- JWT autentifikacija
+- Spring Web, Spring Data JPA, and Spring Security
+- JWT authentication
 - PostgreSQL 18
 - RabbitMQ 4
-- Docker i Docker Compose
-- Demucs preko image-a `voxextractlabs/vox-demucs:1.0.0`
+- Docker and Docker Compose
+- Demucs through the `voxextractlabs/vox-demucs:1.0.0` image
 - Maven Wrapper
 
-## Pokretanje pomoću Dockera
+## Running with Docker
 
-### Preduslovi
+### Prerequisites
 
-- Docker Desktop sa uključenim Linux containers režimom
+- Docker Desktop with Linux containers enabled
 - Docker Compose
-- Omogućena upotreba Docker socketa za `separation-worker`, jer worker pokreće Demucs Docker kontejner
+- Permission to use the Docker socket for `separation-worker`, since the worker starts the Demucs Docker container
 
-### 1. Konfiguracija tajni
+### 1. Configure secrets
 
-Ne commitujte stvarne lozinke, OAuth tajne, JWT ključeve ili mail kredencijale. Napravite `.env` fajlove izvan Git istorije.
+Do not commit real passwords, OAuth secrets, JWT keys, or email credentials. Create the `.env` files locally and keep them out of Git history.
 
-Root `.env` koristi Docker Compose za PostgreSQL lozinku:
+The root `.env` file is used by Docker Compose for the PostgreSQL password:
 
 ```env
-POSTGRESQL_ROOT_PASSWORD=promijeni-ovu-vrijednost
+POSTGRESQL_ROOT_PASSWORD=replace-this-value
 ```
 
-U `backend-sound-flow/.env` i `separation-worker/.env` postavite najmanje:
+Set at least the following values in both `backend-sound-flow/.env` and `separation-worker/.env`:
 
 ```env
 POSTGRESQL_SERVER_URL=jdbc:postgresql://postgres:5432/sound_flow
 POSTGRESQL_ROOT_USERNAME=postgres
-POSTGRESQL_ROOT_PASSWORD=promijeni-ovu-vrijednost
+POSTGRESQL_ROOT_PASSWORD=replace-this-value
 ```
 
-Backend dodatno očekuje:
+The backend additionally expects:
 
 ```env
 GOOGLE_CLIENT_ID=your-google-client-id
@@ -94,81 +94,81 @@ JWT_TOKEN_SECRET=your-long-random-secret
 EMAIL_APP_PASSWORD=your-mail-app-password
 ```
 
-Vrijednost `POSTGRESQL_ROOT_PASSWORD` mora biti ista u root `.env` fajlu i u env fajlovima oba servisa.
+The `POSTGRESQL_ROOT_PASSWORD` value must be identical in the root `.env` file and in both service-specific env files.
 
-### 2. Pokretanje servisa
+### 2. Start the services
 
-Iz root direktorijuma repozitorijuma pokrenite:
+From the repository root, run:
 
 ```bash
 docker compose up --build
 ```
 
-Servisi će biti dostupni na:
+The services will be available at:
 
-| Servis | Adresa |
+| Service | Address |
 | --- | --- |
 | Backend API | `http://localhost:8080` |
 | PostgreSQL | `localhost:5433` |
 | RabbitMQ AMQP | `localhost:5672` |
 | RabbitMQ Management UI | `http://localhost:15672` |
 
-Podrazumijevani RabbitMQ korisnik je `guest`, a lozinka `guest`. Podaci se čuvaju u Docker volume-ima `postgres_data`, `rabbitmq_data` i `separation_storage`.
+The default RabbitMQ username and password are both `guest`. Data is stored in the `postgres_data`, `rabbitmq_data`, and `separation_storage` Docker volumes.
 
-Za zaustavljanje servisa:
+To stop the services:
 
 ```bash
 docker compose down
 ```
 
-Za zaustavljanje uz brisanje persistent podataka koristite `docker compose down -v` samo kada je to namjerno.
+Use `docker compose down -v` only when you intentionally want to remove persistent data.
 
-## Konfiguracija
+## Configuration
 
-Glavne vrijednosti se nalaze u `application.properties` fajlovima oba servisa.
+The main configuration values are located in the `application.properties` files of both services.
 
-- Backend sluša na portu `8080`.
-- Maksimalna veličina upload fajla je `20MB`.
-- PostgreSQL i RabbitMQ se u Docker mreži adresiraju kao `postgres` i `rabbitmq`.
-- Zajednički storage je montiran na `/storage`.
-- RabbitMQ queue za poslove separacije zove se `separationQueue`.
-- Podržane opcije separacije su `FOUR_STEMS` i `VOCALS`.
+- The backend listens on port `8080`.
+- The maximum upload file size is `20MB`.
+- PostgreSQL and RabbitMQ are addressed as `postgres` and `rabbitmq` on the Docker network.
+- Shared storage is mounted at `/storage`.
+- The RabbitMQ queue for separation jobs is named `separationQueue`.
+- Supported separation options are `FOUR_STEMS` and `VOCALS`.
 
 ## API
 
-Backend koristi JWT. Za zaštićene rute šalje se zaglavlje:
+The backend uses JWT authentication. Send the following header with protected requests:
 
 ```http
 Authorization: Bearer <access-token>
 ```
 
-### Autentifikacija
+### Authentication
 
-| Metoda | Ruta | Opis |
+| Method | Route | Description |
 | --- | --- | --- |
-| `POST` | `/auth/registration` | Registracija lokalnog korisnika |
-| `POST` | `/auth/login` | Prijava i izdavanje tokena |
-| `POST` | `/auth/logout` | Odjava |
-| `GET` | `/auth/check` | Provjera trenutne sesije |
-| `POST` | `/auth/refresh` | Obnavljanje access tokena |
-| `GET` | `/auth/verify?token=...` | Verifikacija naloga putem e-maila |
-| `POST` | `/auth/reset` | Zahtjev za reset lozinke |
-| `POST` | `/auth/reset-confirm` | Potvrda nove lozinke |
-| `POST` | `/oauth/google/login` | Prijava pomoću Google ID tokena |
+| `POST` | `/auth/registration` | Register a local user |
+| `POST` | `/auth/login` | Log in and issue tokens |
+| `POST` | `/auth/logout` | Log out |
+| `GET` | `/auth/check` | Check the current session |
+| `POST` | `/auth/refresh` | Refresh the access token |
+| `GET` | `/auth/verify?token=...` | Verify an account by email |
+| `POST` | `/auth/reset` | Request a password reset |
+| `POST` | `/auth/reset-confirm` | Confirm a new password |
+| `POST` | `/oauth/google/login` | Log in with a Google ID token |
 
-### Audio i separacija
+### Audio and Separation
 
-| Metoda | Ruta | Opis |
+| Method | Route | Description |
 | --- | --- | --- |
-| `POST` | `/audio/upload` | Upload audio fajla, multipart polje `file` |
-| `POST` | `/separations/separate` | Kreiranje separation job-a; multipart polja su `clientId`, `file` i `option` |
-| `GET` | `/separations/{id}` | Dohvatanje separation job-a |
-| `GET` | `/separations/status/{jobId}` | Dohvatanje statusa obrade |
-| `GET` | `/separations/download/{jobId}` | Preuzimanje ZIP arhive stemova |
-| `DELETE` | `/separations/{id}` | Brisanje job-a |
-| `GET` | `/clients/{clientId}/separations` | Lista job-ova korisnika |
+| `POST` | `/audio/upload` | Upload an audio file using the `file` multipart field |
+| `POST` | `/separations/separate` | Create a separation job; multipart fields are `clientId`, `file`, and `option` |
+| `GET` | `/separations/{id}` | Get a separation job |
+| `GET` | `/separations/status/{jobId}` | Get the processing status |
+| `GET` | `/separations/download/{jobId}` | Download the ZIP archive containing the stems |
+| `DELETE` | `/separations/{id}` | Delete a job |
+| `GET` | `/clients/{clientId}/separations` | List a user's jobs |
 
-Primjer kreiranja zahtjeva za separaciju:
+Example separation request:
 
 ```bash
 curl -X POST http://localhost:8080/separations/separate \
@@ -178,9 +178,9 @@ curl -X POST http://localhost:8080/separations/separate \
   -F "option=FOUR_STEMS"
 ```
 
-## Lokalni razvoj
+## Local Development
 
-Za pokretanje servisa iz Maven-a potrebno je obezbijediti dostupne PostgreSQL i RabbitMQ instance, kao i odgovarajuće lokalne vrijednosti u `.env` fajlovima.
+To run the services with Maven, provide accessible PostgreSQL and RabbitMQ instances and configure the appropriate local values in the `.env` files.
 
 Backend:
 
@@ -196,21 +196,21 @@ cd separation-worker
 ./mvnw spring-boot:run
 ```
 
-Na Windowsu koristite `mvnw.cmd` umjesto `./mvnw`.
+On Windows, use `mvnw.cmd` instead of `./mvnw`.
 
-Testovi i build:
+Tests and build:
 
 ```bash
 ./mvnw test
 ./mvnw clean package
 ```
 
-## Baza podataka i storage
+## Database and Storage
 
-Direktorijum `db/` sadrži SQL export ranije lokalne baze. Export uključuje i podatke i putanje vezane za prethodno Windows okruženje, pa ga ne treba bez provjere koristiti kao Docker inicijalizaciju baze.
+The `db/` directory contains an SQL export of the previously used local database. The export includes data and paths from the former Windows environment, so it should not be used as a Docker database initializer without reviewing and adapting those paths.
 
-U Docker režimu backend i worker koriste PostgreSQL bazu `sound_flow`, a audio fajlovi i rezultati separacije dijele se kroz volume `separation_storage`, montiran kao `/storage` u oba kontejnera.
+In Docker mode, the backend and worker use the `sound_flow` PostgreSQL database. Audio files and separation results are shared through the `separation_storage` volume, mounted as `/storage` in both containers.
 
-## Status projekta
+## Project Status
 
-Projekat je backend dio diplomskog rada **Sound Flow**. Frontend klijent i dodatna projektna dokumentacija mogu se održavati u zasebnim repozitorijumima ili dodati kao posebni moduli.
+This project is the backend component of the **Sound Flow** diploma thesis. The frontend client and additional project documentation may be maintained in separate repositories or added as separate modules.
